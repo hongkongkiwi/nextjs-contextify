@@ -246,6 +246,7 @@
     "test:unit": "mocha out/test/unit/**/*.test.js --ui tdd --timeout 10000",
     "test:integration": "vscode-test",
     "test:integration:electron": "node out/test/runTest.js",
+    "test:integration:local": "./scripts/test-integration-local.sh",
     "test:extension": "mocha out/test/suite/**/*.test.js",
     "test:watch": "mocha out/test/unit/**/*.test.js --watch",
     "test:coverage": "c8 pnpm run test:unit",
@@ -290,7 +291,8 @@
     "workflow:list": "act --list",
     "workflow:dry-run": "act --dryrun",
     "workflow:test-direct": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:unit && pnpm run analyze:deps && pnpm run docs:generate && pnpm run security:check",
-    "verify:versions": "./scripts/verify-versions.sh"
+    "verify:versions": "./scripts/verify-versions.sh",
+    "debug:ci-env": "./scripts/debug-ci-env.sh"
   },
   "keywords": [
     "next.js",

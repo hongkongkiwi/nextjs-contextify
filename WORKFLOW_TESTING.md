@@ -102,10 +102,16 @@ act -W .github/workflows/ci.yml --job test --matrix node-version:22.x
   run: |
     sudo apt-get update
     sudo apt-get install -y xvfb
-    export DISPLAY=:99
+    echo "DISPLAY=:99" >> $GITHUB_ENV
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    sleep 3
   if: matrix.node-version == '22.x'
 ```
+
+**Key improvements:**
+- Uses `$GITHUB_ENV` to persist DISPLAY variable across workflow steps
+- Adds `sleep 3` to ensure Xvfb is ready before tests run
+- Enhanced VS Code launch args for better CI stability
 
 ### Issue 2: Act Authentication
 
@@ -186,6 +192,10 @@ Runs on pull requests:
 ```bash
 # Version verification
 pnpm run verify:versions    # Check version consistency
+
+# Testing scripts
+pnpm run test:integration:local  # Run integration tests locally with display setup
+pnpm run debug:ci-env           # Debug CI environment and display setup
 
 # Direct workflow testing
 pnpm run workflow:test-direct
