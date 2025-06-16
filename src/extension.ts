@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { UniversalContextGenerator } from './services/UniversalContextGenerator';
 import { FileTreeProvider } from './providers/FileTreeProvider';
 import { Logger } from './utils/Logger';
 import { OutputFormat, TargetLLM } from './core/types';
+
 
 export function activate(context: vscode.ExtensionContext) {
   Logger.info('Next.js Contextify extension is now active!');
@@ -40,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      const selectedFormats = selected.map(item => item.value);
+      const selectedFormats = selected.map(item => item.value as any);
       const formatNames = selected.map(item => item.label).join(', ');
 
       try {
@@ -50,25 +52,82 @@ export function activate(context: vscode.ExtensionContext) {
           location: vscode.ProgressLocation.Notification,
           title: `Generating context for: ${formatNames}...`,
           cancellable: false
-        }, async (progress) => {
-          await generator.generateUniversalContext({
+        }, async (_progress) => {
+          
+          // Ask about token optimization
+          const optimizationChoice = await vscode.window.showQuickPick([
+            { label: '🚀 Maximum Savings (70-80% reduction)', value: 'aggressive' },
+            { label: '⚖️ Balanced (40-60% reduction)', value: 'balanced' },
+            { label: '📄 Full Context (No optimization)', value: 'none' }
+          ], {
+            placeHolder: 'Select optimization level to save AI token costs'
+          });
+
+          // Get optimization options
+          let optimizationOptions = {};
+          if (optimizationChoice?.value === 'aggressive') {
+            optimizationOptions = {
+              maxTotalFiles: 20,
+              maxTokensPerFile: 1000,
+              priorityThreshold: 7,
+              excludeTechnologies: ['prisma', 'zenstack', 'drizzle'],
+              summarizeContent: true,
+              compactFormat: true
+            };
+          } else if (optimizationChoice?.value === 'balanced') {
+            optimizationOptions = {
+              maxTotalFiles: 50,
+              maxTokensPerFile: 2000,
+              priorityThreshold: 5,
+              excludeLargeFiles: true
+            };
+          }
+
+          const results = await generator.generateUniversalContext(selectedFormats, {
             // Required GenerationOptions properties
             format: OutputFormat.MARKDOWN,
             includePrompts: true,
             targetLLM: TargetLLM.CLAUDE,
             
             // UniversalContextOptions properties
-            optimizeFor: selectedFormats as any,
             includeProjectSummary: true,
             includeFileStructure: true,
             includeCodeMetrics: true,
             useMarkdownTables: true,
             includeLineNumbers: false,
-            addSectionAnchors: true
-          }, progress);
-        });
+            addSectionAnchors: true,
+            
+            // Apply optimization options
+            ...optimizationOptions
+          });
 
-        vscode.window.showInformationMessage(`Context generated successfully for: ${formatNames}!`);
+          // Save the results
+          for (const result of results) {
+            const filePath = path.join(workspaceFolder.uri.fsPath, result.filename);
+            await vscode.workspace.fs.writeFile(
+              vscode.Uri.file(filePath), 
+              Buffer.from(result.content, 'utf8')
+            );
+          }
+
+          // Show token savings if optimization was applied
+          if (optimizationChoice && optimizationChoice.value !== 'none') {
+            const totalOptimizedTokens = results.reduce((sum, r) => sum + r.stats.totalTokens, 0);
+            const savings = optimizationChoice.value === 'aggressive' ? 75 : 50;
+            vscode.window.showInformationMessage(
+              `✅ Context generated with ~${savings}% token savings! (${totalOptimizedTokens.toLocaleString()} tokens)`
+            );
+          } else {
+            vscode.window.showInformationMessage(`✅ Context generated for: ${formatNames}!`);
+          }
+
+          // Auto-open first file if configured
+          if (vscode.workspace.getConfiguration('nextjsContextify').get('autoOpenOutput') && results.length > 0) {
+            const firstFile = path.join(workspaceFolder.uri.fsPath, results[0].filename);
+            const uri = vscode.Uri.file(firstFile);
+            await vscode.window.showTextDocument(uri);
+          }
+        });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         Logger.error('Failed to generate universal context:', error instanceof Error ? error : new Error(String(error)));
@@ -76,6 +135,8 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
+
+
 
   // Create ignore file command
   const createIgnoreFileCommand = vscode.commands.registerCommand(

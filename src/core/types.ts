@@ -262,6 +262,9 @@ export interface ContextStats {
   readonly processingTime?: number;
   readonly projectDetection?: ProjectDetectionResult;
   readonly detectedFeatures?: readonly string[];
+  readonly versions?: any; // PackageVersions from VersionDetector
+  readonly projectStructure?: any; // ProjectStructure from ProjectStructureDetector  
+  readonly environmentAnalysis?: any; // EnvironmentAnalysis from EnvironmentDetector
 }
 
 // Generation options

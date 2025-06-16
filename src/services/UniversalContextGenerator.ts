@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileScanner } from '../core/FileScanner';
-import { FileInfo, ContextStats, GenerationOptions } from '../core/types';
+import { FileInfo, ContextStats, GenerationOptions, ProjectStructureType, PackageManager, UILibrary, ProjectLibraries, DatabaseProvider, AuthLibrary, APIPattern, StateLibrary } from '../core/types';
 import { Logger } from '../utils/Logger';
+import { VersionDetector, PackageVersions } from './VersionDetector';
+import { EnvironmentDetector } from './EnvironmentDetector';
+import { ProjectStructureDetector } from './ProjectStructureDetector';
 
 export interface UniversalContextOptions extends GenerationOptions {
   // AI-specific optimizations - now supports multiple formats
@@ -24,33 +27,207 @@ export interface UniversalContextOptions extends GenerationOptions {
   useMarkdownTables?: boolean;
   includeLineNumbers?: boolean;
   addSectionAnchors?: boolean;
+  
+  includeFullContent?: boolean;
+  includeArchitectureAnalysis?: boolean;
+  maxTotalFiles?: number;
+  
+  // Selective exclusions to save tokens
+  excludeTechnologies?: string[];
+  excludeFileTypes?: string[];
+  excludeDirectories?: string[];
+  excludeLargeFiles?: boolean; // Files > 50KB
+  
+  // Content optimization
+  summarizeContent?: boolean; // Provide summaries instead of full content
+  priorityThreshold?: number; // Only include files above this priority (1-10)
+  compactFormat?: boolean; // More concise output format
+}
+
+export type AIAssistantType = 'Universal' | 'Claude' | 'Cursor' | 'Roo' | 'Windsurf' | 'Cline';
+
+export interface UniversalContextResult {
+  assistantType: AIAssistantType;
+  filename: string;
+  content: string;
+  stats: {
+    totalFiles: number;
+    totalSize: number;
+    totalTokens: number;
+    excludedFiles: number;
+  };
 }
 
 export class UniversalContextGenerator {
   private rootPath: string;
   private scanner: FileScanner;
+  private versionDetector: VersionDetector;
+  private environmentDetector: EnvironmentDetector;
+  private projectStructureDetector: ProjectStructureDetector;
 
   constructor(rootPath: string) {
     this.rootPath = rootPath;
     this.scanner = new FileScanner(rootPath);
+    this.versionDetector = new VersionDetector(rootPath);
+    this.environmentDetector = new EnvironmentDetector(rootPath);
+    this.projectStructureDetector = new ProjectStructureDetector(rootPath);
   }
 
   async generateUniversalContext(
-    options: UniversalContextOptions,
-    progress?: vscode.Progress<{ message?: string; increment?: number }>
-  ): Promise<void> {
-    const { files, stats } = await this.scanner.scanAndProcessFiles(progress);
-    
-    progress?.report({ message: 'Generating universal context format...', increment: 10 });
-
-    const timestamp = new Date().toISOString();
-    const output = this.buildUniversalOutput(files, stats, options, timestamp);
-
-    await this.saveUniversalOutput(output, options);
-
-    if (vscode.workspace.getConfiguration('nextjsContextify').get('autoOpenOutput')) {
-      await this.openOutput(options);
+    assistantTypes: AIAssistantType[],
+    options: UniversalContextOptions = {
+      format: 'MARKDOWN' as any,
+      includePrompts: true,
+      targetLLM: 'CLAUDE' as any
     }
+  ): Promise<UniversalContextResult[]> {
+    try {
+      const files = await this.collectProjectFiles();
+      
+      // Apply token optimization filters
+      const optimizedFiles = this.applyTokenOptimizations(files, options);
+      
+      const stats = await this.generateStats(optimizedFiles);
+      const timestamp = new Date().toISOString();
+
+      const results: UniversalContextResult[] = [];
+
+      for (const assistantType of assistantTypes) {
+        const output = this.buildOptimizedOutput(optimizedFiles, stats, options, timestamp, assistantType);
+        
+        results.push({
+          assistantType,
+          filename: `context-${assistantType.toLowerCase()}.md`,
+          content: output,
+          stats: {
+            totalFiles: optimizedFiles.length,
+            totalSize: optimizedFiles.reduce((sum, f) => sum + f.size, 0),
+            totalTokens: this.estimateTokens(output),
+            excludedFiles: files.length - optimizedFiles.length
+          }
+        });
+      }
+
+      return results;
+    } catch (error) {
+      throw new Error(`Failed to generate universal context: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private async collectProjectFiles(): Promise<FileInfo[]> {
+    try {
+      const { files } = await this.scanner.scanAndProcessFiles();
+      return files;
+    } catch (error) {
+      Logger.error('Failed to collect project files:', error instanceof Error ? error : new Error(String(error)));
+      return [];
+    }
+  }
+
+  private async generateStats(files: FileInfo[]): Promise<ContextStats> {
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const totalTokens = files.reduce((sum, f) => sum + (f.tokens || this.estimateTokens(f.content)), 0);
+    
+    const categories: Record<string, number> = {};
+    files.forEach(file => {
+      categories[file.category] = (categories[file.category] || 0) + 1;
+    });
+
+    // Detect versions and project structure
+    const versions = await this.versionDetector.detectVersions();
+    const projectStructure = await this.projectStructureDetector.analyzeProjectStructure();
+    const environmentAnalysis = await this.environmentDetector.analyzeEnvironmentFiles();
+
+    // Map project structure type
+    const structureType = this.mapProjectStructureType(projectStructure.type);
+    
+    // Detect package manager
+    const packageManager = this.detectPackageManager();
+
+    return {
+      totalFiles: files.length,
+      totalSize,
+      totalTokens,
+      categories,
+      generatedAt: new Date(),
+      processingTime: 0,
+      projectDetection: {
+        structureType,
+        packageManager,
+        nextjsVersion: versions.nextjs,
+        confidence: 95,
+        detectedLibraries: this.mapDetectedLibraries(versions),
+        customConfig: {
+          customPaths: {},
+          hasAppRouter: projectStructure.type === 'app-router' || projectStructure.type === 'mixed',
+          hasPagesRouter: projectStructure.type === 'pages-router' || projectStructure.type === 'mixed'
+        },
+        recommendations: projectStructure.recommendations
+      },
+      versions,
+      projectStructure,
+      environmentAnalysis
+    };
+  }
+
+  private applyTokenOptimizations(files: FileInfo[], options: UniversalContextOptions): FileInfo[] {
+    let optimizedFiles = [...files];
+
+    // Apply priority threshold filter
+    if (options.priorityThreshold) {
+      optimizedFiles = optimizedFiles.filter(f => f.priority >= options.priorityThreshold!);
+    }
+
+    // Apply technology exclusions
+    if (options.excludeTechnologies?.length) {
+      optimizedFiles = this.filterByTechnology(optimizedFiles, options.excludeTechnologies);
+    }
+
+    // Apply file type exclusions
+    if (options.excludeFileTypes?.length) {
+      optimizedFiles = optimizedFiles.filter(f => 
+        !options.excludeFileTypes!.some(ext => f.path.endsWith(ext))
+      );
+    }
+
+    // Apply directory exclusions
+    if (options.excludeDirectories?.length) {
+      optimizedFiles = optimizedFiles.filter(f => 
+        !options.excludeDirectories!.some(dir => f.path.includes(`/${dir}/`) || f.path.startsWith(`${dir}/`))
+      );
+    }
+
+    // Exclude large files if requested
+    if (options.excludeLargeFiles) {
+      optimizedFiles = optimizedFiles.filter(f => f.size <= 50 * 1024); // 50KB limit
+    }
+
+    // Apply content summarization to reduce tokens
+    if (options.summarizeContent) {
+      optimizedFiles = optimizedFiles.map(f => ({
+        ...f,
+        content: this.summarizeFileContent(f.content, f.path),
+        tokens: Math.floor(f.tokens * 0.3) // Estimate 70% token reduction
+      }));
+    }
+
+    // Apply max token per file limit
+    if (options.maxTokensPerFile) {
+      optimizedFiles = optimizedFiles.map(f => ({
+        ...f,
+        content: this.truncateContent(f.content, options.maxTokensPerFile!),
+        tokens: Math.min(f.tokens, options.maxTokensPerFile!)
+      }));
+    }
+
+    // Apply total file limit (keep highest priority)
+    if (options.maxTotalFiles && optimizedFiles.length > options.maxTotalFiles) {
+      optimizedFiles = optimizedFiles
+        .sort((a, b) => b.priority - a.priority)
+        .slice(0, options.maxTotalFiles);
+    }
+
+    return optimizedFiles;
   }
 
   private buildUniversalOutput(
@@ -165,17 +342,41 @@ export class UniversalContextGenerator {
     output += `## Executive Summary\n\n`;
     output += this.generateExecutiveSummary(stats);
     
+    // Architecture overview for Claude's understanding
+    output += `## Architecture Overview\n\n`;
+    output += this.generateArchitectureOverview(stats);
+    
     // Structured project information
     output += `## Project Structure\n\n`;
     output += `**Root:** ${this.rootPath}\n`;
     output += `**Generated:** ${timestamp}\n`;
-    output += `**Files Analyzed:** ${stats.totalFiles}\n\n`;
+    output += `**Files Analyzed:** ${stats.totalFiles}\n`;
+    output += `**Context Size:** ${stats.totalTokens.toLocaleString()} tokens\n\n`;
 
-    // Architecture overview for Claude's understanding
-    output += `## Architecture Overview\n\n`;
-    output += this.generateArchitectureOverview(stats);
+    // Design patterns and architectural decisions
+    if (stats.projectDetection) {
+      output += `## Design Patterns & Decisions\n\n`;
+      output += `- **Structure Type:** ${stats.projectDetection.structureType}\n`;
+      output += `- **Package Manager:** ${stats.projectDetection.packageManager}\n`;
+      output += `- **Confidence Score:** ${stats.projectDetection.confidence}%\n\n`;
+      
+      if (stats.projectDetection.recommendations) {
+        output += `### Architectural Recommendations\n\n`;
+        stats.projectDetection.recommendations.forEach(rec => {
+          output += `- ${rec}\n`;
+        });
+        output += '\n';
+      }
+    }
 
-    // Categorized file listing
+    // Dependency relationships for Claude's understanding
+    output += `## Dependency Relationships\n\n`;
+    this.generateDependencyMap(files).forEach(dep => {
+      output += `- **${dep.file}** depends on: ${dep.dependencies.join(', ')}\n`;
+    });
+    output += '\n';
+
+    // Categorized file listing with comprehensive content
     const categorizedFiles = this.categorizeFilesBySections(files);
     
     Object.entries(categorizedFiles).forEach(([category, categoryFiles]) => {
@@ -200,20 +401,44 @@ export class UniversalContextGenerator {
     let output = `# 🎯 Cursor Context - Next.js Project\n\n`;
     
     output += `**Project:** ${path.basename(this.rootPath)}\n`;
-    output += `**Files:** ${stats.totalFiles} | **Size:** ${(stats.totalSize / 1024).toFixed(1)}KB\n\n`;
+    output += `**Files:** ${stats.totalFiles} | **Size:** ${(stats.totalSize / 1024).toFixed(1)}KB | **Tokens:** ${stats.totalTokens.toLocaleString()}\n\n`;
 
-    // Quick navigation for Cursor
+    // Quick navigation for Cursor with anchor links
     output += `## 📍 Quick Navigation\n\n`;
-    files.slice(0, 10).forEach((file, i) => {
-      output += `${i + 1}. [\`${file.path}\`](#file-${i + 1})\n`;
+    files.slice(0, 15).forEach((file, i) => {
+      output += `${i + 1}. [\`${file.path}\`](#file-${i + 1}) (${file.priority} priority)\n`;
     });
     output += '\n';
 
-    // Compact file listing
+    // Component relationship map for @codebase feature
+    output += `## 🔗 Component Relationships\n\n`;
+    const relationships = this.generateComponentRelationships(files);
+    relationships.forEach(rel => {
+      output += `- **${rel.component}**: ${rel.relationships.join(' → ')}\n`;
+    });
+    output += '\n';
+
+    // Symbol definitions for quick reference
+    output += `## 🎯 Symbol Map\n\n`;
+    const symbols = this.extractSymbols(files);
+    Object.entries(symbols).forEach(([type, symbolList]) => {
+      if (symbolList.length > 0) {
+        output += `**${type}:** ${symbolList.join(', ')}\n`;
+      }
+    });
+    output += '\n';
+
+    // Compact file listing with anchor links
     files.forEach((file, index) => {
       output += `<a id="file-${index + 1}"></a>\n`;
       output += `### ${index + 1}. \`${file.path}\`\n\n`;
-      output += `**Category:** ${file.category} | **Priority:** ${file.priority} | **Tokens:** ${file.tokens}\n\n`;
+      output += `**Category:** ${file.category} | **Priority:** ${file.priority} | **Tokens:** ${file.tokens}\n`;
+      
+      if (file.isClientComponent !== undefined) {
+        output += `**Component Type:** ${file.isClientComponent ? 'Client' : 'Server'}\n`;
+      }
+      
+      output += '\n';
       
       const extension = path.extname(file.path).slice(1) || 'text';
       output += `\`\`\`${extension}\n${file.content}\n\`\`\`\n\n`;
@@ -235,27 +460,69 @@ export class UniversalContextGenerator {
     output += `## Project Setup\n`;
     output += `- **Root Directory:** ${this.rootPath}\n`;
     output += `- **Total Files:** ${stats.totalFiles}\n`;
-    output += `- **Project Type:** ${stats.projectDetection?.structureType || 'Next.js'}\n\n`;
+    output += `- **Project Type:** ${stats.projectDetection?.structureType || 'Next.js'}\n`;
+    output += `- **Package Manager:** ${stats.projectDetection?.packageManager || 'npm'}\n\n`;
 
-    // Key files first for Roo's workflow
-    output += `## 🔑 Key Configuration Files\n\n`;
+    // Configuration files first for Roo's workflow
+    output += `## 🔧 Configuration Files\n\n`;
     const configFiles = files.filter(f => 
       f.category.includes('CONFIGURATION') || 
       f.path.includes('package.json') ||
-      f.path.includes('next.config')
+      f.path.includes('next.config') ||
+      f.path.includes('tsconfig') ||
+      f.path.includes('tailwind.config') ||
+      f.path.includes('.env')
     );
     
     configFiles.forEach(file => {
       output += `### \`${file.path}\`\n\n`;
+      output += `**Purpose:** ${this.getFilePurpose(file.path)}\n`;
+      output += `**CLI Usage:** \`cat ${file.path}\` or edit with your preferred editor\n\n`;
       output += `\`\`\`${path.extname(file.path).slice(1) || 'text'}\n${file.content}\n\`\`\`\n\n`;
     });
 
-    // Main source files
+    // Development commands and scripts
+    const packageJsonFile = files.find(f => f.path.includes('package.json'));
+    if (packageJsonFile) {
+      try {
+        const packageData = JSON.parse(packageJsonFile.content);
+        if (packageData.scripts) {
+          output += `## 🚀 Available Scripts\n\n`;
+          Object.entries(packageData.scripts).forEach(([script, command]) => {
+            output += `- **\`pnpm run ${script}\`**: ${command}\n`;
+          });
+          output += '\n';
+        }
+      } catch (_e) {
+        // Ignore JSON parse errors
+      }
+    }
+
+    // Environment setup
+    output += `## 🌍 Environment Setup\n\n`;
+    output += `\`\`\`bash\n`;
+    output += `# Clone and setup\n`;
+    output += `cd ${path.basename(this.rootPath)}\n`;
+    output += `${stats.projectDetection?.packageManager || 'npm'} install\n`;
+    output += `\n`;
+    output += `# Development\n`;
+    output += `${stats.projectDetection?.packageManager || 'npm'} run dev\n`;
+    output += `\n`;
+    output += `# Build for production\n`;
+    output += `${stats.projectDetection?.packageManager || 'npm'} run build\n`;
+    output += `\`\`\`\n\n`;
+
+    // Main source files organized by functionality
     output += `## 📁 Source Files\n\n`;
-    const sourceFiles = files.filter(f => !configFiles.includes(f));
+    const sourceFiles = files.filter(f => !configFiles.includes(f)).sort((a, b) => b.priority - a.priority);
     
     sourceFiles.forEach(file => {
       output += `### \`${file.path}\`\n\n`;
+      output += `**Category:** ${file.category} | **Priority:** ${file.priority}\n`;
+      if (file.isClientComponent !== undefined) {
+        output += `**Component Type:** ${file.isClientComponent ? 'Client Component' : 'Server Component'}\n`;
+      }
+      output += '\n';
       output += `\`\`\`${path.extname(file.path).slice(1) || 'text'}\n${file.content}\n\`\`\`\n\n`;
     });
 
@@ -274,18 +541,44 @@ export class UniversalContextGenerator {
     // Clean project header
     output += `**Project:** ${path.basename(this.rootPath)}\n`;
     output += `**Generated:** ${new Date(timestamp).toLocaleString()}\n`;
-    output += `**Files:** ${stats.totalFiles} files (${(stats.totalSize / 1024).toFixed(1)}KB)\n\n`;
+    output += `**Files:** ${stats.totalFiles} files (${(stats.totalSize / 1024).toFixed(1)}KB)\n`;
+    output += `**Tokens:** ${stats.totalTokens.toLocaleString()}\n\n`;
 
-    // Technology stack overview
+    // Technology stack overview for team understanding
     output += `## 🔧 Technology Stack\n\n`;
-    if (stats.detectedFeatures) {
-      stats.detectedFeatures.forEach(feature => {
-        output += `- ${feature}\n`;
-      });
+    if (stats.projectDetection?.detectedLibraries) {
+      const libs = stats.projectDetection.detectedLibraries;
+      
+      output += `| Layer | Technologies |\n`;
+      output += `|-------|-------------|\n`;
+      if (libs.ui.length > 0) {output += `| **Frontend** | ${libs.ui.join(', ')} |\n`;}
+      if (libs.database.length > 0) {output += `| **Database** | ${libs.database.join(', ')} |\n`;}
+      if (libs.auth.length > 0) {output += `| **Auth** | ${libs.auth.join(', ')} |\n`;}
+      if (libs.api.length > 0) {output += `| **API** | ${libs.api.join(', ')} |\n`;}
+      if (libs.testing.length > 0) {output += `| **Testing** | ${libs.testing.join(', ')} |\n`;}
+      output += '\n';
     }
-    output += '\n';
 
-    // Organized file structure
+    // Feature mapping for team collaboration
+    output += `## 🎯 Feature Map\n\n`;
+    const featureMap = this.generateFeatureMap(files);
+    Object.entries(featureMap).forEach(([feature, fileList]) => {
+      output += `**${feature}:**\n`;
+      fileList.forEach(file => {
+        output += `- \`${file}\`\n`;
+      });
+      output += '\n';
+    });
+
+    // Coding standards for team consistency
+    if (options.includeCodeMetrics !== false) {
+      output += `## 📋 Coding Standards\n\n`;
+      output += `- **File Naming:** ${this.detectNamingConvention(files)}\n`;
+      output += `- **Component Pattern:** ${this.detectComponentPattern(files)}\n`;
+      output += `- **Import Style:** ${this.detectImportStyle(files)}\n\n`;
+    }
+
+    // Organized file structure with team-friendly categorization
     const filesByCategory = this.groupFilesByCategory(files);
     
     Object.entries(filesByCategory).forEach(([category, categoryFiles]) => {
@@ -296,7 +589,7 @@ export class UniversalContextGenerator {
         if (file.isClientComponent !== undefined) {
           output += `**Type:** ${file.isClientComponent ? 'Client Component' : 'Server Component'}\n`;
         }
-        output += `**Priority:** ${file.priority} | **Size:** ${file.size} bytes\n\n`;
+        output += `**Priority:** ${file.priority} | **Size:** ${file.size} bytes | **Tokens:** ${file.tokens}\n\n`;
         
         const extension = path.extname(file.path).slice(1) || 'text';
         output += `\`\`\`${extension}\n${file.content}\n\`\`\`\n\n`;
@@ -647,5 +940,425 @@ export class UniversalContextGenerator {
         await vscode.window.showTextDocument(document);
       }
     }
+  }
+
+  private generateDependencyMap(files: FileInfo[]): Array<{file: string, dependencies: string[]}> {
+    return files.map(file => {
+      const dependencies: string[] = [];
+      
+      // Simple dependency extraction from imports
+      const importMatches = file.content.match(/import.*from\s+['"`]([^'"`]+)['"`]/g);
+      if (importMatches) {
+        importMatches.forEach(match => {
+          const dep = match.match(/from\s+['"`]([^'"`]+)['"`]/)?.[1];
+          if (dep && !dep.startsWith('.') && !dependencies.includes(dep)) {
+            dependencies.push(dep);
+          }
+        });
+      }
+      
+      return {
+        file: file.path,
+        dependencies: dependencies.slice(0, 5) // Limit to top 5 dependencies
+      };
+    });
+  }
+
+  private generateComponentRelationships(files: FileInfo[]): Array<{component: string, relationships: string[]}> {
+    const relationships: Array<{component: string, relationships: string[]}> = [];
+    
+    files.forEach(file => {
+      const component = path.basename(file.path, path.extname(file.path));
+      const _relativePath = file.path;
+      
+      // Extract imports to show relationships
+      const importMatches = file.content.match(/import.*from\s+['"`]\.([^'"`]+)['"`]/g);
+      const imports: string[] = [];
+      
+      if (importMatches) {
+        importMatches.forEach(match => {
+          const importPath = match.match(/from\s+['"`]\.([^'"`]+)['"`]/)?.[1];
+          if (importPath) {
+            imports.push(importPath.replace(/^\//, ''));
+          }
+        });
+      }
+      
+      if (imports.length > 0) {
+        relationships.push({
+          component,
+          relationships: imports
+        });
+      }
+    });
+    
+    return relationships.slice(0, 10); // Limit to top 10 relationships
+  }
+
+  private extractSymbols(files: FileInfo[]): Record<string, string[]> {
+    const symbols: Record<string, string[]> = {
+      'Functions': [],
+      'Components': [],
+      'Types': [],
+      'Interfaces': []
+    };
+    
+    files.forEach(file => {
+      // Extract function declarations
+      const functionMatches = file.content.match(/(?:function|const)\s+([A-Za-z][A-Za-z0-9]*)/g);
+      if (functionMatches) {
+        functionMatches.forEach(match => {
+          const funcName = match.split(/\s+/)[1];
+          if (funcName && /^[A-Z]/.test(funcName)) {
+            symbols['Components'].push(funcName);
+          } else if (funcName) {
+            symbols['Functions'].push(funcName);
+          }
+        });
+      }
+      
+      // Extract type definitions
+      const typeMatches = file.content.match(/type\s+([A-Za-z][A-Za-z0-9]*)/g);
+      if (typeMatches) {
+        typeMatches.forEach(match => {
+          const typeName = match.split(/\s+/)[1];
+          if (typeName) {
+            symbols['Types'].push(typeName);
+          }
+        });
+      }
+      
+      // Extract interface definitions
+      const interfaceMatches = file.content.match(/interface\s+([A-Za-z][A-Za-z0-9]*)/g);
+      if (interfaceMatches) {
+        interfaceMatches.forEach(match => {
+          const interfaceName = match.split(/\s+/)[1];
+          if (interfaceName) {
+            symbols['Interfaces'].push(interfaceName);
+          }
+        });
+      }
+    });
+    
+    // Remove duplicates and limit
+    Object.keys(symbols).forEach(key => {
+      symbols[key] = [...new Set(symbols[key])].slice(0, 10);
+    });
+    
+    return symbols;
+  }
+
+  private getFilePurpose(filePath: string): string {
+    const filename = path.basename(filePath);
+    
+    if (filename === 'package.json') {return 'Project dependencies and scripts';}
+    if (filename.includes('next.config')) {return 'Next.js configuration';}
+    if (filename.includes('tsconfig')) {return 'TypeScript configuration';}
+    if (filename.includes('tailwind.config')) {return 'Tailwind CSS configuration';}
+    if (filename.includes('.env')) {return 'Environment variables';}
+    if (filename.includes('eslint')) {return 'ESLint configuration';}
+    if (filename.includes('prettier')) {return 'Prettier configuration';}
+    
+    return 'Configuration file';
+  }
+
+  private generateFeatureMap(files: FileInfo[]): Record<string, string[]> {
+    const featureMap: Record<string, string[]> = {};
+    
+    files.forEach(file => {
+      const feature = this.extractFeatureFromPath(file.path);
+      if (!featureMap[feature]) {
+        featureMap[feature] = [];
+      }
+      featureMap[feature].push(file.path);
+    });
+    
+    return featureMap;
+  }
+
+  private extractFeatureFromPath(filePath: string): string {
+    if (filePath.includes('/components/')) {return 'UI Components';}
+    if (filePath.includes('/pages/') || filePath.includes('/app/')) {return 'Pages & Routes';}
+    if (filePath.includes('/api/')) {return 'API Endpoints';}
+    if (filePath.includes('/lib/') || filePath.includes('/utils/')) {return 'Utilities';}
+    if (filePath.includes('/hooks/')) {return 'React Hooks';}
+    if (filePath.includes('/types/') || filePath.includes('.d.ts')) {return 'Type Definitions';}
+    if (filePath.includes('/styles/') || filePath.includes('.css')) {return 'Styling';}
+    if (filePath.includes('/test/') || filePath.includes('.test.')) {return 'Testing';}
+    if (filePath.includes('config')) {return 'Configuration';}
+    
+    return 'Core Files';
+  }
+
+  private detectNamingConvention(files: FileInfo[]): string {
+    const kebabCase = files.filter(f => /^[a-z][a-z0-9-]*$/.test(path.basename(f.path, path.extname(f.path)))).length;
+    const camelCase = files.filter(f => /^[a-z][a-zA-Z0-9]*$/.test(path.basename(f.path, path.extname(f.path)))).length;
+    const pascalCase = files.filter(f => /^[A-Z][a-zA-Z0-9]*$/.test(path.basename(f.path, path.extname(f.path)))).length;
+    
+    if (kebabCase > camelCase && kebabCase > pascalCase) {return 'kebab-case';}
+    if (pascalCase > camelCase) {return 'PascalCase';}
+    return 'camelCase';
+  }
+
+  private detectComponentPattern(files: FileInfo[]): string {
+    const hasClientComponents = files.some(f => f.isClientComponent === true);
+    const hasServerComponents = files.some(f => f.isClientComponent === false);
+    
+    if (hasClientComponents && hasServerComponents) {return 'Mixed (Client + Server Components)';}
+    if (hasClientComponents) {return 'Client Components';}
+    if (hasServerComponents) {return 'Server Components';}
+    return 'Standard React Components';
+  }
+
+  private detectImportStyle(files: FileInfo[]): string {
+    let absoluteImports = 0;
+    let relativeImports = 0;
+    
+    files.forEach(file => {
+      const imports = file.content.match(/import.*from\s+['"`]([^'"`]+)['"`]/g) || [];
+      imports.forEach(imp => {
+        if (imp.includes('from \'@/') || imp.includes('from "@/')) {
+          absoluteImports++;
+        } else if (imp.includes('from \'./') || imp.includes('from "../')) {
+          relativeImports++;
+        }
+      });
+    });
+    
+    if (absoluteImports > relativeImports) {return 'Absolute imports (@/)';}
+    if (relativeImports > 0) {return 'Relative imports (./,../)';}
+    return 'Mixed import styles';
+  }
+
+  private filterByTechnology(files: FileInfo[], excludeTechnologies: string[]): FileInfo[] {
+    return files.filter(file => {
+      const content = file.content.toLowerCase();
+      const path = file.path.toLowerCase();
+      
+      return !excludeTechnologies.some(tech => {
+        const techLower = tech.toLowerCase();
+        return (
+          content.includes(techLower) ||
+          path.includes(techLower) ||
+          content.includes(`'${techLower}'`) ||
+          content.includes(`"${techLower}"`) ||
+          content.includes(`from '${techLower}`) ||
+          content.includes(`from "${techLower}`)
+        );
+      });
+    });
+  }
+
+  private summarizeFileContent(content: string, filePath: string): string {
+    const extension = path.extname(filePath);
+    
+    // For code files, extract key elements
+    if (['.ts', '.tsx', '.js', '.jsx'].includes(extension)) {
+      const summary: string[] = [];
+      
+      // Extract imports
+      const imports = content.match(/import.*from.*;/g) || [];
+      if (imports.length > 0) {
+        summary.push('// IMPORTS');
+        summary.push(...imports.slice(0, 5)); // Top 5 imports
+        if (imports.length > 5) {summary.push(`// ... ${imports.length - 5} more imports`);}
+        summary.push('');
+      }
+      
+      // Extract exports and functions
+      const exports = content.match(/(export\s+(default\s+)?(function|const|class|interface|type).*)/g) || [];
+      if (exports.length > 0) {
+        summary.push('// KEY EXPORTS');
+        summary.push(...exports.map(exp => exp.split('{')[0] + (exp.includes('{') ? ' { ... }' : '')));
+        summary.push('');
+      }
+      
+      // Add file structure comment
+      const lines = content.split('\n').length;
+      summary.push(`// File: ${filePath} (${lines} lines, summarized)`);
+      
+      return summary.join('\n');
+    }
+    
+    // For config files, keep essential parts
+    if (['.json', '.yml', '.yaml'].includes(extension)) {
+      try {
+        if (extension === '.json') {
+          const parsed = JSON.parse(content);
+          return JSON.stringify(parsed, null, 2);
+        }
+      } catch {
+        // Fallback to truncation
+      }
+    }
+    
+    // Default: truncate to first 500 characters with structure
+    return content.length > 500 
+      ? content.substring(0, 500) + `\n\n// ... (truncated ${content.length - 500} characters)`
+      : content;
+  }
+
+  private truncateContent(content: string, maxTokens: number): string {
+    // Rough estimate: 1 token ≈ 4 characters
+    const maxChars = maxTokens * 4;
+    
+    if (content.length <= maxChars) {
+      return content;
+    }
+    
+    const truncated = content.substring(0, maxChars);
+    const lastNewline = truncated.lastIndexOf('\n');
+    
+    // Try to break at a clean line
+    if (lastNewline > maxChars * 0.8) {
+      return truncated.substring(0, lastNewline) + '\n\n// ... (content truncated)';
+    }
+    
+    return truncated + '\n\n// ... (content truncated)';
+  }
+
+  private estimateTokens(content: string): number {
+    // Rough token estimation: ~4 characters per token for code
+    return Math.ceil(content.length / 4);
+  }
+
+  private buildOptimizedOutput(
+    files: FileInfo[],
+    stats: ContextStats,
+    options: UniversalContextOptions,
+    timestamp: string,
+    assistantType: AIAssistantType
+  ): string {
+    if (options.compactFormat) {
+      return this.buildCompactOutput(files, stats, assistantType);
+    }
+    
+    switch (assistantType) {
+      case 'Claude':
+        return this.buildClaudeOptimizedOutput(files, stats, options, timestamp);
+      case 'Cursor':
+        return this.buildCursorOptimizedOutput(files, stats, options, timestamp);
+      case 'Roo':
+        return this.buildRooOptimizedOutput(files, stats, options, timestamp);
+      case 'Windsurf':
+        return this.buildWindsurfOptimizedOutput(files, stats, options, timestamp);
+      case 'Cline':
+        return this.buildClineOptimizedOutput(files, stats, options, timestamp);
+      default:
+        return this.buildUniversalOutput(files, stats, options, timestamp);
+    }
+  }
+
+  private buildCompactOutput(files: FileInfo[], stats: ContextStats, assistantType: AIAssistantType): string {
+    let output = `# ${assistantType} Context\n`;
+    output += `**Files:** ${files.length} | **Tokens:** ~${stats.totalTokens.toLocaleString()}\n\n`;
+    
+    // Group by category for compact display
+    const categories = this.groupFilesByCategory(files);
+    
+    Object.entries(categories).forEach(([category, categoryFiles]) => {
+      output += `## ${this.formatCategoryName(category)}\n`;
+      
+      categoryFiles.forEach(file => {
+        output += `### ${file.path}\n`;
+        output += `\`\`\`${path.extname(file.path).slice(1) || 'text'}\n${file.content}\n\`\`\`\n`;
+      });
+    });
+    
+    return output;
+  }
+
+  private mapProjectStructureType(type: 'app-router' | 'pages-router' | 'mixed' | 'unknown'): ProjectStructureType {
+    switch (type) {
+      case 'app-router':
+      case 'pages-router':
+      case 'mixed':
+        return ProjectStructureType.STANDARD_NEXTJS; // All Next.js types map to standard
+      default:
+        return ProjectStructureType.STANDARD_NEXTJS;
+    }
+  }
+
+  private detectPackageManager(): PackageManager {
+    const lockFiles = [
+      { file: 'pnpm-lock.yaml', manager: PackageManager.PNPM },
+      { file: 'yarn.lock', manager: PackageManager.YARN },
+      { file: 'package-lock.json', manager: PackageManager.NPM },
+      { file: 'bun.lockb', manager: PackageManager.PNPM } // Use PNPM as fallback for bun
+    ];
+
+    for (const { file, manager } of lockFiles) {
+      if (fs.existsSync(path.join(this.rootPath, file))) {
+        return manager;
+      }
+    }
+
+    return PackageManager.NPM; // Default fallback
+  }
+
+  private mapDetectedLibraries(versions: PackageVersions): ProjectLibraries {
+    const ui: UILibrary[] = [];
+    const database: DatabaseProvider[] = [];
+    const auth: AuthLibrary[] = [];
+    const api: APIPattern[] = [];
+    const state: StateLibrary[] = [];
+    const utilities: string[] = [];
+
+    // UI Libraries
+    if (versions.tailwind) {
+      ui.push(UILibrary.TAILWIND_CSS);
+    }
+    if (versions.shadcnui) {
+      ui.push(UILibrary.SHADCN_UI);
+    }
+    if (versions.radixui) {
+      ui.push(UILibrary.RADIX_UI);
+    }
+
+    // Database
+    if (versions.prisma) {
+      database.push(DatabaseProvider.PRISMA);
+    }
+    if (versions.drizzle) {
+      database.push(DatabaseProvider.DRIZZLE);
+    }
+    if (versions.zenstack) {
+      database.push(DatabaseProvider.ZENSTACK);
+    }
+
+    // Auth
+    if (versions.clerk) {
+      auth.push(AuthLibrary.CLERK);
+    }
+    if (versions.supabase) {
+      auth.push(AuthLibrary.SUPABASE);
+    }
+
+    // API
+    if (versions.trpc) {
+      api.push(APIPattern.TRPC);
+    }
+
+    // State Management
+    if (versions.zustand) {
+      state.push(StateLibrary.ZUSTAND);
+    }
+
+    // TypeScript
+    if (versions.typescript) {
+      utilities.push('TypeScript');
+    }
+
+    return {
+      ui,
+      database,
+      auth,
+      api,
+      state,
+      dataFetching: [],
+      styling: [],
+      testing: [],
+      utilities
+    };
   }
 } 
