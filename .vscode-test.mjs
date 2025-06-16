@@ -16,10 +16,17 @@ export default defineConfig({
     '--disable-dev-shm-usage', // Overcome limited resource problems
     '--disable-gpu', // Disable GPU for headless environments
     '--disable-web-security', // Sometimes needed for extension testing
+    '--disable-features=VizDisplayCompositor', // Additional headless flag
+    '--disable-ipc-flooding-protection', // Prevent IPC timeouts in CI
+    '--max_old_space_size=4096', // Increase memory for CI
+    '--disable-background-timer-throttling', // Prevent timing issues
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
   ],
   env: {
     NODE_ENV: 'test',
-    DISPLAY: ':99', // For headless environments
+    DISPLAY: process.env.DISPLAY || ':99', // For headless environments with fallback
+    CI: process.env.CI || 'false',
   },
   // Version configurations for testing against different VS Code versions
   version: 'stable', // Can be 'stable', 'insiders', or specific version like '1.85.0'
@@ -31,4 +38,8 @@ export default defineConfig({
     enabled: false, // Can be enabled when needed
     exclude: ['**/node_modules/**', '**/test/**'],
   },
+  
+  // Additional options for CI stability
+  platform: process.platform,
+  reuseMachineInstall: false, // Always download fresh in CI
 }); 
