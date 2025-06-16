@@ -47,6 +47,24 @@ jobs:
         sleep 3
       if: matrix.node-version == '22.x'
       
+    - name: Debug CI environment for VS Code tests
+      run: pnpm run debug:ci-env
+      if: matrix.node-version == '22.x'
+      
+    - name: Verify display server
+      run: |
+        echo "DISPLAY is set to: $DISPLAY"
+        # Test if display is accessible
+        if command -v xdpyinfo >/dev/null 2>&1; then
+          echo "Testing display server..."
+          xdpyinfo -display $DISPLAY > /dev/null && echo "✅ Display server is working" || echo "❌ Display server not responding"
+        else
+          echo "xdpyinfo not available, installing..."
+          sudo apt-get install -y x11-utils
+          xdpyinfo -display $DISPLAY > /dev/null && echo "✅ Display server is working" || echo "❌ Display server not responding"
+        fi
+      if: matrix.node-version == '22.x'
+      
     - name: Run linting
       run: pnpm run lint
       
@@ -59,15 +77,9 @@ jobs:
     - name: Run unit tests
       run: pnpm run test:unit
       
-    - name: Debug CI environment for VS Code tests
-      run: pnpm run debug:ci-env
-      if: matrix.node-version == '22.x'
-      
     - name: Run integration tests
       run: pnpm run test:ci
       if: matrix.node-version == '22.x'
-      env:
-        DISPLAY: ":99"
       
     - name: Run test coverage
       run: pnpm run test:coverage
