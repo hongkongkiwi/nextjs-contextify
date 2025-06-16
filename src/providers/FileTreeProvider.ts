@@ -141,8 +141,12 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileTreeItem> {
     }
 
     return items.sort((a, b) => {
-      if (a.isDirectory && !b.isDirectory) {return -1;}
-      if (!a.isDirectory && b.isDirectory) {return 1;}
+      if (a.isDirectory && !b.isDirectory) {
+        return -1;
+      }
+      if (!a.isDirectory && b.isDirectory) {
+        return 1;
+      }
       return (a.label as string).localeCompare(b.label as string);
     });
   }

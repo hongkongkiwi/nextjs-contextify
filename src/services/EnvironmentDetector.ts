@@ -29,7 +29,7 @@ export interface EnvironmentAnalysis {
 /**
  * Detects and analyzes Next.js environment files according to the official documentation:
  * https://nextjs.org/docs/pages/guides/environment-variables
- * 
+ *
  * Load order (stopping once variable is found):
  * 1. process.env
  * 2. .env.$(NODE_ENV).local
@@ -62,10 +62,13 @@ export class EnvironmentDetector {
         hasTestEnv: files.some(f => f.filename.includes('.env.test')),
         hasDevelopmentEnv: files.some(f => f.filename.includes('.env.development')),
         hasProductionEnv: files.some(f => f.filename.includes('.env.production')),
-        hasLocalEnv: files.some(f => f.filename.includes('.env.local'))
+        hasLocalEnv: files.some(f => f.filename.includes('.env.local')),
       };
     } catch (error) {
-      Logger.error('Failed to analyze environment files:', error instanceof Error ? error : new Error(String(error)));
+      Logger.error(
+        'Failed to analyze environment files:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.getEmptyAnalysis();
     }
   }
@@ -77,28 +80,28 @@ export class EnvironmentDetector {
         exists: false,
         path: '',
         priority: 5,
-        description: 'Default environment variables for all environments'
+        description: 'Default environment variables for all environments',
       },
       {
         filename: `.env.${this.nodeEnv}`,
         exists: false,
         path: '',
         priority: 4,
-        description: `Environment-specific variables for ${this.nodeEnv}`
+        description: `Environment-specific variables for ${this.nodeEnv}`,
       },
       {
         filename: '.env.local',
         exists: false,
         path: '',
         priority: 3,
-        description: 'Local environment variables (ignored by git, not loaded in test)'
+        description: 'Local environment variables (ignored by git, not loaded in test)',
       },
       {
         filename: `.env.${this.nodeEnv}.local`,
         exists: false,
         path: '',
         priority: 2,
-        description: `Local environment-specific variables for ${this.nodeEnv}`
+        description: `Local environment-specific variables for ${this.nodeEnv}`,
       },
       // Additional environment files
       {
@@ -106,43 +109,43 @@ export class EnvironmentDetector {
         exists: false,
         path: '',
         priority: 6,
-        description: 'Development environment variables'
+        description: 'Development environment variables',
       },
       {
         filename: '.env.production',
         exists: false,
         path: '',
         priority: 6,
-        description: 'Production environment variables'
+        description: 'Production environment variables',
       },
       {
         filename: '.env.test',
         exists: false,
         path: '',
         priority: 6,
-        description: 'Test environment variables'
+        description: 'Test environment variables',
       },
       {
         filename: '.env.development.local',
         exists: false,
         path: '',
         priority: 7,
-        description: 'Local development environment variables'
+        description: 'Local development environment variables',
       },
       {
         filename: '.env.production.local',
         exists: false,
         path: '',
         priority: 7,
-        description: 'Local production environment variables'
+        description: 'Local production environment variables',
       },
       {
         filename: '.env.test.local',
         exists: false,
         path: '',
         priority: 7,
-        description: 'Local test environment variables'
-      }
+        description: 'Local test environment variables',
+      },
     ];
 
     for (const envFile of envFiles) {
@@ -155,7 +158,7 @@ export class EnvironmentDetector {
           const content = await fs.promises.readFile(filePath, 'utf8');
           const variables = this.parseEnvFile(content);
           envFile.variables = variables;
-          
+
           // Separate public and private variables
           envFile.publicVariables = {};
           envFile.privateVariables = {};
@@ -168,7 +171,10 @@ export class EnvironmentDetector {
             }
           });
         } catch (error) {
-          Logger.error(`Failed to read ${envFile.filename}:`, error instanceof Error ? error : new Error(String(error)));
+          Logger.error(
+            `Failed to read ${envFile.filename}:`,
+            error instanceof Error ? error : new Error(String(error))
+          );
         }
       }
     }
@@ -182,7 +188,7 @@ export class EnvironmentDetector {
 
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       // Skip empty lines and comments
       if (!trimmedLine || trimmedLine.startsWith('#')) {
         continue;
@@ -192,17 +198,19 @@ export class EnvironmentDetector {
       const match = trimmedLine.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
       if (match) {
         const [, key, value] = match;
-        
+
         // Handle quoted values
         let parsedValue = value;
-        if ((value.startsWith('"') && value.endsWith('"')) || 
-            (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           parsedValue = value.slice(1, -1);
         }
 
         // Handle variable references ($VARIABLE)
         parsedValue = this.expandVariables(parsedValue, variables);
-        
+
         variables[key] = parsedValue;
       }
     }
@@ -222,7 +230,7 @@ export class EnvironmentDetector {
       `.env.${this.nodeEnv}.local`,
       '.env.local',
       `.env.${this.nodeEnv}`,
-      '.env'
+      '.env',
     ];
 
     // .env.local is not checked when NODE_ENV is test
@@ -251,7 +259,7 @@ export class EnvironmentDetector {
           // Only add if not already defined (higher priority files win)
           if (!allVariables[key]) {
             allVariables[key] = value;
-            
+
             if (key.startsWith('NEXT_PUBLIC_')) {
               publicVariables[key] = value;
             } else {
@@ -276,7 +284,7 @@ export class EnvironmentDetector {
       hasTestEnv: false,
       hasDevelopmentEnv: false,
       hasProductionEnv: false,
-      hasLocalEnv: false
+      hasLocalEnv: false,
     };
   }
 
@@ -286,7 +294,7 @@ export class EnvironmentDetector {
    */
   getRelevantEnvFiles(): string[] {
     const relevantFiles: string[] = [];
-    
+
     // Always include base .env if it exists
     if (fs.existsSync(path.join(this.rootPath, '.env'))) {
       relevantFiles.push('.env');
@@ -322,7 +330,7 @@ export class EnvironmentDetector {
   }> {
     const hasExample = fs.existsSync(path.join(this.rootPath, '.env.example'));
     const hasGitignore = this.checkGitignoreForEnvFiles();
-    
+
     const analysis = await this.analyzeEnvironmentFiles();
     const hasPublicVarsInEnv = Object.keys(analysis.publicVariables).length > 0;
 
@@ -344,7 +352,7 @@ export class EnvironmentDetector {
       hasExample,
       hasGitignore,
       hasPublicVarsInEnv,
-      recommendations
+      recommendations,
     };
   }
 
@@ -361,4 +369,4 @@ export class EnvironmentDetector {
       return false;
     }
   }
-} 
+}

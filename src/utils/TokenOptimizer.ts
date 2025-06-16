@@ -6,13 +6,13 @@ export interface TokenOptimizationOptions {
   maxTotalFiles?: number;
   maxTokensPerFile?: number;
   priorityThreshold?: number; // 1-10 scale
-  
+
   // Technology exclusions
   excludeTechnologies?: string[];
   excludeFileTypes?: string[];
   excludeDirectories?: string[];
   excludeLargeFiles?: boolean; // > 50KB
-  
+
   // Content optimization
   summarizeContent?: boolean;
   compactFormat?: boolean;
@@ -32,50 +32,74 @@ export interface OptimizationResult {
 export class TokenOptimizer {
   private static readonly DEFAULT_EXCLUSIONS = {
     technologies: [
-      'prisma', 'zenstack', 'drizzle', 'planetscale',
-      'supabase', 'firebase', 'aws-sdk', 'mongodb',
-      'express', 'fastify', 'koa', 'hapi'
+      'prisma',
+      'zenstack',
+      'drizzle',
+      'planetscale',
+      'supabase',
+      'firebase',
+      'aws-sdk',
+      'mongodb',
+      'express',
+      'fastify',
+      'koa',
+      'hapi',
     ],
     fileTypes: [
-      '.lock', '.log', '.map', '.d.ts', '.min.js',
-      '.bundle.js', '.chunk.js', '.vendor.js'
+      '.lock',
+      '.log',
+      '.map',
+      '.d.ts',
+      '.min.js',
+      '.bundle.js',
+      '.chunk.js',
+      '.vendor.js',
     ],
     directories: [
-      'node_modules', '.next', '.vercel', '.git',
-      'dist', 'build', 'coverage', '.nyc_output'
-    ]
+      'node_modules',
+      '.next',
+      '.vercel',
+      '.git',
+      'dist',
+      'build',
+      'coverage',
+      '.nyc_output',
+    ],
   };
 
   static async showOptimizationDialog(): Promise<TokenOptimizationOptions | undefined> {
-    const selections = await vscode.window.showQuickPick([
+    const selections = await vscode.window.showQuickPick(
+      [
+        {
+          label: '🚀 Maximum Savings',
+          description: 'Aggressive optimization - may lose some detail',
+          detail: 'Summarize content, exclude large files, limit to top 20 files',
+          value: 'aggressive',
+        },
+        {
+          label: '⚖️ Balanced',
+          description: 'Good balance of savings and completeness',
+          detail: 'Moderate summarization, exclude common bloat',
+          value: 'balanced',
+        },
+        {
+          label: '🔧 Custom',
+          description: 'Choose specific exclusions',
+          detail: 'Select what to exclude manually',
+          value: 'custom',
+        },
+        {
+          label: '📄 Full Context (No Optimization)',
+          description: 'Include everything - highest token cost',
+          detail: 'No optimization applied',
+          value: 'none',
+        },
+      ],
       {
-        label: '🚀 Maximum Savings',
-        description: 'Aggressive optimization - may lose some detail',
-        detail: 'Summarize content, exclude large files, limit to top 20 files',
-        value: 'aggressive'
-      },
-      {
-        label: '⚖️ Balanced',
-        description: 'Good balance of savings and completeness',
-        detail: 'Moderate summarization, exclude common bloat',
-        value: 'balanced'
-      },
-      {
-        label: '🔧 Custom',
-        description: 'Choose specific exclusions',
-        detail: 'Select what to exclude manually',
-        value: 'custom'
-      },
-      {
-        label: '📄 Full Context (No Optimization)',
-        description: 'Include everything - highest token cost',
-        detail: 'No optimization applied',
-        value: 'none'
+        placeHolder: 'Select optimization level to save AI tokens and costs',
+        ignoreFocusOut: true,
       }
-    ], {
-      placeHolder: 'Select optimization level to save AI tokens and costs',
-      ignoreFocusOut: true
-    });
+    );
 
     if (!selections) {
       return undefined;
@@ -94,7 +118,7 @@ export class TokenOptimizer {
           summarizeContent: true,
           compactFormat: true,
           removeComments: true,
-          removeEmptyLines: true
+          removeEmptyLines: true,
         };
 
       case 'balanced':
@@ -109,7 +133,7 @@ export class TokenOptimizer {
           summarizeContent: false,
           compactFormat: false,
           removeComments: false,
-          removeEmptyLines: true
+          removeEmptyLines: true,
         };
 
       case 'custom':
@@ -129,12 +153,12 @@ export class TokenOptimizer {
       this.DEFAULT_EXCLUSIONS.technologies.map(tech => ({
         label: tech,
         description: `Exclude ${tech} related files`,
-        picked: false
+        picked: false,
       })),
       {
         placeHolder: 'Select technologies to exclude (saves tokens)',
         canPickMany: true,
-        ignoreFocusOut: true
+        ignoreFocusOut: true,
       }
     );
 
@@ -143,32 +167,35 @@ export class TokenOptimizer {
     }
 
     // Ask about content optimization
-    const contentOpts = await vscode.window.showQuickPick([
+    const contentOpts = await vscode.window.showQuickPick(
+      [
+        {
+          label: 'Summarize file contents',
+          description: 'Extract key parts only (70% token reduction)',
+          picked: false,
+        },
+        {
+          label: 'Remove comments',
+          description: 'Strip code comments (10-20% reduction)',
+          picked: false,
+        },
+        {
+          label: 'Compact format',
+          description: 'Minimal formatting (5-10% reduction)',
+          picked: false,
+        },
+        {
+          label: 'Exclude large files (>50KB)',
+          description: 'Skip files over 50KB',
+          picked: true,
+        },
+      ],
       {
-        label: 'Summarize file contents',
-        description: 'Extract key parts only (70% token reduction)',
-        picked: false
-      },
-      {
-        label: 'Remove comments',
-        description: 'Strip code comments (10-20% reduction)',
-        picked: false
-      },
-      {
-        label: 'Compact format',
-        description: 'Minimal formatting (5-10% reduction)',
-        picked: false
-      },
-      {
-        label: 'Exclude large files (>50KB)',
-        description: 'Skip files over 50KB',
-        picked: true
+        placeHolder: 'Select content optimizations',
+        canPickMany: true,
+        ignoreFocusOut: true,
       }
-    ], {
-      placeHolder: 'Select content optimizations',
-      canPickMany: true,
-      ignoreFocusOut: true
-    });
+    );
 
     if (contentOpts) {
       options.summarizeContent = contentOpts.some(opt => opt.label.includes('Summarize'));
@@ -181,12 +208,12 @@ export class TokenOptimizer {
     const fileLimit = await vscode.window.showInputBox({
       placeHolder: 'Maximum number of files (leave empty for no limit)',
       prompt: 'Limit total files to reduce tokens',
-      validateInput: (value) => {
+      validateInput: value => {
         if (value && isNaN(Number(value))) {
           return 'Please enter a valid number';
         }
         return undefined;
-      }
+      },
     });
 
     if (fileLimit && fileLimit.trim()) {
@@ -196,12 +223,18 @@ export class TokenOptimizer {
     return options;
   }
 
-  static optimizeFiles(files: FileInfo[], options: TokenOptimizationOptions): {
+  static optimizeFiles(
+    files: FileInfo[],
+    options: TokenOptimizationOptions
+  ): {
     optimized: FileInfo[];
     result: OptimizationResult;
   } {
     const originalFiles = files.length;
-    const originalTokens = files.reduce((sum, f) => sum + (f.tokens || this.estimateTokens(f.content)), 0);
+    const originalTokens = files.reduce(
+      (sum, f) => sum + (f.tokens || this.estimateTokens(f.content)),
+      0
+    );
 
     let optimizedFiles = [...files];
 
@@ -217,17 +250,18 @@ export class TokenOptimizer {
 
     // Apply file type exclusions
     if (options.excludeFileTypes?.length) {
-      optimizedFiles = optimizedFiles.filter(f => 
-        !options.excludeFileTypes!.some(ext => f.path.endsWith(ext))
+      optimizedFiles = optimizedFiles.filter(
+        f => !options.excludeFileTypes!.some(ext => f.path.endsWith(ext))
       );
     }
 
     // Apply directory exclusions
     if (options.excludeDirectories?.length) {
-      optimizedFiles = optimizedFiles.filter(f => 
-        !options.excludeDirectories!.some(dir => 
-          f.path.includes(`/${dir}/`) || f.path.startsWith(`${dir}/`)
-        )
+      optimizedFiles = optimizedFiles.filter(
+        f =>
+          !options.excludeDirectories!.some(
+            dir => f.path.includes(`/${dir}/`) || f.path.startsWith(`${dir}/`)
+          )
       );
     }
 
@@ -241,8 +275,10 @@ export class TokenOptimizer {
       optimizedFiles = optimizedFiles.map(f => ({
         ...f,
         content: this.optimizeContent(f.content, options),
-        tokens: Math.floor((f.tokens || this.estimateTokens(f.content)) * 
-          (options.summarizeContent ? 0.3 : options.removeComments ? 0.85 : 0.95))
+        tokens: Math.floor(
+          (f.tokens || this.estimateTokens(f.content)) *
+            (options.summarizeContent ? 0.3 : options.removeComments ? 0.85 : 0.95)
+        ),
       }));
     }
 
@@ -251,7 +287,7 @@ export class TokenOptimizer {
       optimizedFiles = optimizedFiles.map(f => ({
         ...f,
         content: this.truncateContent(f.content, options.maxTokensPerFile!),
-        tokens: Math.min(f.tokens || this.estimateTokens(f.content), options.maxTokensPerFile!)
+        tokens: Math.min(f.tokens || this.estimateTokens(f.content), options.maxTokensPerFile!),
       }));
     }
 
@@ -262,7 +298,10 @@ export class TokenOptimizer {
         .slice(0, options.maxTotalFiles);
     }
 
-    const optimizedTokens = optimizedFiles.reduce((sum, f) => sum + (f.tokens || this.estimateTokens(f.content)), 0);
+    const optimizedTokens = optimizedFiles.reduce(
+      (sum, f) => sum + (f.tokens || this.estimateTokens(f.content)),
+      0
+    );
     const savedTokens = originalTokens - optimizedTokens;
     const savedPercentage = Math.round((savedTokens / originalTokens) * 100);
 
@@ -274,8 +313,8 @@ export class TokenOptimizer {
         originalTokens,
         optimizedTokens,
         savedTokens,
-        savedPercentage
-      }
+        savedPercentage,
+      },
     };
   }
 
@@ -283,7 +322,7 @@ export class TokenOptimizer {
     return files.filter(file => {
       const content = file.content.toLowerCase();
       const path = file.path.toLowerCase();
-      
+
       return !excludeTechnologies.some(tech => {
         const techLower = tech.toLowerCase();
         return (
@@ -328,16 +367,19 @@ export class TokenOptimizer {
     if (imports.length > 0) {
       summary.push('// IMPORTS');
       summary.push(...imports.slice(0, 5));
-      if (imports.length > 5) {summary.push(`// ... ${imports.length - 5} more imports`);}
+      if (imports.length > 5) {
+        summary.push(`// ... ${imports.length - 5} more imports`);
+      }
       summary.push('');
     }
 
     // Keep exports and function signatures
-    const exports = lines.filter(line => 
-      line.includes('export') && 
-      (line.includes('function') || line.includes('const') || line.includes('class'))
+    const exports = lines.filter(
+      line =>
+        line.includes('export') &&
+        (line.includes('function') || line.includes('const') || line.includes('class'))
     );
-    
+
     if (exports.length > 0) {
       summary.push('// EXPORTS & FUNCTIONS');
       exports.forEach(exp => {
@@ -355,22 +397,22 @@ export class TokenOptimizer {
 
   private static truncateContent(content: string, maxTokens: number): string {
     const maxChars = maxTokens * 4; // Rough estimate
-    
+
     if (content.length <= maxChars) {
       return content;
     }
-    
+
     const truncated = content.substring(0, maxChars);
     const lastNewline = truncated.lastIndexOf('\n');
-    
+
     if (lastNewline > maxChars * 0.8) {
       return truncated.substring(0, lastNewline) + '\n\n// ... (truncated for token limit)';
     }
-    
+
     return truncated + '\n\n// ... (truncated for token limit)';
   }
 
   private static estimateTokens(content: string): number {
     return Math.ceil(content.length / 4);
   }
-} 
+}

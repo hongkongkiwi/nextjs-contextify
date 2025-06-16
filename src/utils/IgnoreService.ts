@@ -92,13 +92,13 @@ export class IgnoreService {
     // Support for various AI coding assistants and editors
     const customIgnoreFiles = [
       '.nextjscollectorignore', // Our custom ignore file
-      '.cursorignore',          // Cursor editor
-      '.codiumignore',          // VSCodium
-      '.clineignore',           // Cline AI assistant
-      '.rooignore',             // Roo AI assistant
-      '.windsurfignore',        // Windsurf editor
-      '.claudeignore',          // Claude-specific patterns
-      '.aiignore',              // Generic AI assistant ignore
+      '.cursorignore', // Cursor editor
+      '.codiumignore', // VSCodium
+      '.clineignore', // Cline AI assistant
+      '.rooignore', // Roo AI assistant
+      '.windsurfignore', // Windsurf editor
+      '.claudeignore', // Claude-specific patterns
+      '.aiignore', // Generic AI assistant ignore
     ];
 
     for (const ignoreFile of customIgnoreFiles) {
@@ -156,11 +156,11 @@ export class IgnoreService {
     totalPatterns: number;
   } {
     const gitignorePath = path.join(this.rootPath, '.gitignore');
-    
+
     const customIgnoreFiles = [
       '.nextjscollectorignore',
       '.cursorignore',
-      '.codiumignore', 
+      '.codiumignore',
       '.clineignore',
       '.rooignore',
       '.windsurfignore',
@@ -184,4 +184,4 @@ export class IgnoreService {
       totalPatterns,
     };
   }
-} 
+}

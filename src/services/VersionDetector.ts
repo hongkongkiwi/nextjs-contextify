@@ -40,7 +40,7 @@ export class VersionDetector {
   async detectVersions(): Promise<PackageVersions> {
     try {
       await this.loadPackageJson();
-      
+
       const versions: PackageVersions = {
         nextjs: this.getNextJsVersion(),
         react: this.getPackageVersion('react') || 'unknown',
@@ -54,7 +54,7 @@ export class VersionDetector {
         drizzle: this.getDrizzleVersion(),
         zenstack: this.getZenStackVersion(),
         shadcnui: this.getShadcnVersion(),
-        radixui: this.getRadixVersion()
+        radixui: this.getRadixVersion(),
       };
 
       // Remove undefined values
@@ -66,17 +66,20 @@ export class VersionDetector {
 
       return versions;
     } catch (error) {
-      Logger.error('Failed to detect versions:', error instanceof Error ? error : new Error(String(error)));
+      Logger.error(
+        'Failed to detect versions:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return {
         nextjs: 'unknown',
-        react: 'unknown'
+        react: 'unknown',
       };
     }
   }
 
   private async loadPackageJson(): Promise<void> {
     const packageJsonPath = path.join(this.rootPath, 'package.json');
-    
+
     if (!fs.existsSync(packageJsonPath)) {
       throw new Error('package.json not found');
     }
@@ -91,13 +94,13 @@ export class VersionDetector {
 
     // Clean version string (remove ^ ~ >= etc.)
     const cleanVersion = version.replace(/[\^~>=<]/g, '');
-    
+
     // Extract major.minor version
     const versionParts = cleanVersion.split('.');
     if (versionParts.length >= 2) {
       return `${versionParts[0]}.${versionParts[1]}`;
     }
-    
+
     return cleanVersion;
   }
 
@@ -107,12 +110,12 @@ export class VersionDetector {
 
     const cleanVersion = version.replace(/[\^~>=<]/g, '');
     const versionParts = cleanVersion.split('.');
-    
+
     if (versionParts.length >= 1) {
       const major = parseInt(versionParts[0]);
       return major >= 4 ? 'v4' : 'v3';
     }
-    
+
     return cleanVersion;
   }
 
@@ -121,9 +124,11 @@ export class VersionDetector {
   }
 
   private getTrpcVersion(): string | undefined {
-    return this.getPackageVersion('@trpc/server') || 
-           this.getPackageVersion('@trpc/client') ||
-           this.getPackageVersion('@trpc/next');
+    return (
+      this.getPackageVersion('@trpc/server') ||
+      this.getPackageVersion('@trpc/client') ||
+      this.getPackageVersion('@trpc/next')
+    );
   }
 
   private getClerkVersion(): string | undefined {
@@ -131,7 +136,9 @@ export class VersionDetector {
   }
 
   private getSupabaseVersion(): string | undefined {
-    return this.getPackageVersion('@supabase/supabase-js') || this.getPackageVersion('@supabase/auth-js');
+    return (
+      this.getPackageVersion('@supabase/supabase-js') || this.getPackageVersion('@supabase/auth-js')
+    );
   }
 
   private getDrizzleVersion(): string | undefined {
@@ -166,7 +173,7 @@ export class VersionDetector {
       '@radix-ui/react-popover',
       '@radix-ui/react-select',
       '@radix-ui/react-slot',
-      '@radix-ui/react-toast'
+      '@radix-ui/react-toast',
     ];
 
     for (const pkg of radixPackages) {
@@ -179,9 +186,11 @@ export class VersionDetector {
   private getPackageVersion(packageName: string): string | undefined {
     if (!this.packageJsonData) return undefined;
 
-    return this.packageJsonData.dependencies?.[packageName] ||
-           this.packageJsonData.devDependencies?.[packageName] ||
-           this.packageJsonData.peerDependencies?.[packageName];
+    return (
+      this.packageJsonData.dependencies?.[packageName] ||
+      this.packageJsonData.devDependencies?.[packageName] ||
+      this.packageJsonData.peerDependencies?.[packageName]
+    );
   }
 
   getPackageJson(): PackageJsonData | null {
@@ -191,7 +200,7 @@ export class VersionDetector {
   isNextJs15OrLater(): boolean {
     const version = this.getNextJsVersion();
     if (version === 'unknown') return false;
-    
+
     const majorVersion = parseInt(version.split('.')[0]);
     return majorVersion >= 15;
   }
@@ -231,19 +240,19 @@ export class VersionDetector {
     if (isNext15 && routerType === 'app') {
       return 'Next.js 15+ App Router';
     }
-    
+
     if (routerType === 'app') {
       return 'Next.js App Router';
     }
-    
+
     if (routerType === 'pages') {
       return 'Next.js Pages Router';
     }
-    
+
     if (routerType === 'mixed') {
       return 'Next.js Mixed Router';
     }
 
     return 'Next.js Standard';
   }
-} 
+}

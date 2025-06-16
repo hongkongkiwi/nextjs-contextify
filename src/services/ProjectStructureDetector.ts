@@ -51,7 +51,7 @@ export interface StandardDirectory {
 /**
  * Detects Next.js project structure according to the official documentation:
  * https://nextjs.org/docs/pages/getting-started/project-structure
- * 
+ *
  * Handles both App Router and Pages Router structures
  * Supports Next.js v15 standardized project structure
  */
@@ -67,15 +67,19 @@ export class ProjectStructureDetector {
   async analyzeProjectStructure(): Promise<ProjectStructure> {
     try {
       await this.versionDetector.detectVersions();
-      
+
       const versions = await this.versionDetector.detectVersions();
       const routerType = this.versionDetector.getRouterType();
       const isNext15 = this.versionDetector.isNextJs15OrLater();
-      
+
       const configFiles = this.detectConfigFiles();
       const routerDirectories = this.detectRouterDirectories();
       const standardDirectories = this.detectStandardDirectories(isNext15);
-      const recommendations = this.generateRecommendations(routerType, isNext15, standardDirectories);
+      const recommendations = this.generateRecommendations(
+        routerType,
+        isNext15,
+        standardDirectories
+      );
 
       return {
         type: this.mapRouterType(routerType),
@@ -83,7 +87,8 @@ export class ProjectStructureDetector {
         hasSrcDirectory: this.versionDetector.hasSrcDirectory(),
         hasPublicDirectory: this.hasDirectory('public'),
         hasStylesDirectory: this.hasDirectory('styles') || this.hasDirectory('src/styles'),
-        hasComponentsDirectory: this.hasDirectory('components') || this.hasDirectory('src/components'),
+        hasComponentsDirectory:
+          this.hasDirectory('components') || this.hasDirectory('src/components'),
         hasLibDirectory: this.hasDirectory('lib') || this.hasDirectory('src/lib'),
         hasUtilsDirectory: this.hasDirectory('utils') || this.hasDirectory('src/utils'),
         hasHooksDirectory: this.hasDirectory('hooks') || this.hasDirectory('src/hooks'),
@@ -92,10 +97,13 @@ export class ProjectStructureDetector {
         routerDirectories,
         standardDirectories,
         isNext15Structure: isNext15,
-        recommendations
+        recommendations,
       };
     } catch (error) {
-      Logger.error('Failed to analyze project structure:', error instanceof Error ? error : new Error(String(error)));
+      Logger.error(
+        'Failed to analyze project structure:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.getEmptyStructure();
     }
   }
@@ -108,37 +116,37 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, 'next.config.js'),
         exists: false,
         description: 'Next.js configuration file',
-        type: 'config'
+        type: 'config',
       },
       {
         name: 'next.config.mjs',
         path: path.join(this.rootPath, 'next.config.mjs'),
         exists: false,
         description: 'Next.js configuration file (ES modules)',
-        type: 'config'
+        type: 'config',
       },
       {
         name: 'next.config.ts',
         path: path.join(this.rootPath, 'next.config.ts'),
         exists: false,
         description: 'Next.js configuration file (TypeScript)',
-        type: 'config'
+        type: 'config',
       },
-      
+
       // TypeScript config files
       {
         name: 'tsconfig.json',
         path: path.join(this.rootPath, 'tsconfig.json'),
         exists: false,
         description: 'TypeScript configuration',
-        type: 'typescript'
+        type: 'typescript',
       },
       {
         name: 'next-env.d.ts',
         path: path.join(this.rootPath, 'next-env.d.ts'),
         exists: false,
         description: 'Next.js TypeScript declarations',
-        type: 'typescript'
+        type: 'typescript',
       },
 
       // Style config files
@@ -147,21 +155,21 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, 'tailwind.config.js'),
         exists: false,
         description: 'Tailwind CSS configuration',
-        type: 'style'
+        type: 'style',
       },
       {
         name: 'tailwind.config.ts',
         path: path.join(this.rootPath, 'tailwind.config.ts'),
         exists: false,
         description: 'Tailwind CSS configuration (TypeScript)',
-        type: 'style'
+        type: 'style',
       },
       {
         name: 'postcss.config.js',
         path: path.join(this.rootPath, 'postcss.config.js'),
         exists: false,
         description: 'PostCSS configuration',
-        type: 'style'
+        type: 'style',
       },
 
       // Build and package management
@@ -170,28 +178,28 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, 'package.json'),
         exists: false,
         description: 'Node.js package configuration',
-        type: 'config'
+        type: 'config',
       },
       {
         name: 'pnpm-lock.yaml',
         path: path.join(this.rootPath, 'pnpm-lock.yaml'),
         exists: false,
         description: 'PNPM lock file',
-        type: 'build'
+        type: 'build',
       },
       {
         name: 'yarn.lock',
         path: path.join(this.rootPath, 'yarn.lock'),
         exists: false,
         description: 'Yarn lock file',
-        type: 'build'
+        type: 'build',
       },
       {
         name: 'package-lock.json',
         path: path.join(this.rootPath, 'package-lock.json'),
         exists: false,
         description: 'NPM lock file',
-        type: 'build'
+        type: 'build',
       },
 
       // Linting and formatting
@@ -200,14 +208,14 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, '.eslintrc.json'),
         exists: false,
         description: 'ESLint configuration',
-        type: 'lint'
+        type: 'lint',
       },
       {
         name: '.prettierrc',
         path: path.join(this.rootPath, '.prettierrc'),
         exists: false,
         description: 'Prettier configuration',
-        type: 'lint'
+        type: 'lint',
       },
 
       // Instrumentation (Next.js v13.4+)
@@ -216,14 +224,14 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, 'instrumentation.js'),
         exists: false,
         description: 'Next.js instrumentation hooks',
-        type: 'config'
+        type: 'config',
       },
       {
         name: 'instrumentation.ts',
         path: path.join(this.rootPath, 'instrumentation.ts'),
         exists: false,
         description: 'Next.js instrumentation hooks (TypeScript)',
-        type: 'config'
+        type: 'config',
       },
 
       // Middleware
@@ -232,15 +240,15 @@ export class ProjectStructureDetector {
         path: path.join(this.rootPath, 'middleware.js'),
         exists: false,
         description: 'Next.js middleware',
-        type: 'config'
+        type: 'config',
       },
       {
         name: 'middleware.ts',
         path: path.join(this.rootPath, 'middleware.ts'),
         exists: false,
         description: 'Next.js middleware (TypeScript)',
-        type: 'config'
-      }
+        type: 'config',
+      },
     ];
 
     configFiles.forEach(file => {
@@ -262,10 +270,15 @@ export class ProjectStructureDetector {
           type: 'app',
           path: appPath,
           exists: true,
-          hasLayout: this.hasFileInDirectory(appPath, ['layout.js', 'layout.jsx', 'layout.ts', 'layout.tsx']),
+          hasLayout: this.hasFileInDirectory(appPath, [
+            'layout.js',
+            'layout.jsx',
+            'layout.ts',
+            'layout.tsx',
+          ]),
           hasPage: this.hasFileInDirectory(appPath, ['page.js', 'page.jsx', 'page.ts', 'page.tsx']),
           hasApiRoutes: this.hasApiRoutesInApp(appPath),
-          specialFiles: this.getAppRouterSpecialFiles(appPath)
+          specialFiles: this.getAppRouterSpecialFiles(appPath),
         });
       }
     }
@@ -279,10 +292,20 @@ export class ProjectStructureDetector {
           type: 'pages',
           path: pagesPath,
           exists: true,
-          hasLayout: this.hasFileInDirectory(pagesPath, ['_app.js', '_app.jsx', '_app.ts', '_app.tsx']),
-          hasPage: this.hasFileInDirectory(pagesPath, ['index.js', 'index.jsx', 'index.ts', 'index.tsx']),
+          hasLayout: this.hasFileInDirectory(pagesPath, [
+            '_app.js',
+            '_app.jsx',
+            '_app.ts',
+            '_app.tsx',
+          ]),
+          hasPage: this.hasFileInDirectory(pagesPath, [
+            'index.js',
+            'index.jsx',
+            'index.ts',
+            'index.tsx',
+          ]),
           hasApiRoutes: this.hasApiRoutesInPages(pagesPath),
-          specialFiles: this.getPagesRouterSpecialFiles(pagesPath)
+          specialFiles: this.getPagesRouterSpecialFiles(pagesPath),
         });
       }
     }
@@ -298,7 +321,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Reusable UI components',
         isRecommended: true,
-        next15Standard: true
+        next15Standard: true,
       },
       {
         name: 'lib',
@@ -306,7 +329,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Utility functions and configurations',
         isRecommended: true,
-        next15Standard: true
+        next15Standard: true,
       },
       {
         name: 'utils',
@@ -314,7 +337,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Utility functions',
         isRecommended: true,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'hooks',
@@ -322,7 +345,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Custom React hooks',
         isRecommended: true,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'types',
@@ -330,7 +353,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'TypeScript type definitions',
         isRecommended: true,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'styles',
@@ -338,7 +361,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Global styles and CSS files',
         isRecommended: true,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'public',
@@ -346,7 +369,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Static assets (images, icons, etc.)',
         isRecommended: true,
-        next15Standard: true
+        next15Standard: true,
       },
       {
         name: 'constants',
@@ -354,7 +377,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'Application constants',
         isRecommended: false,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'context',
@@ -362,7 +385,7 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'React context providers',
         isRecommended: false,
-        next15Standard: false
+        next15Standard: false,
       },
       {
         name: 'store',
@@ -370,8 +393,8 @@ export class ProjectStructureDetector {
         exists: false,
         description: 'State management store',
         isRecommended: false,
-        next15Standard: false
-      }
+        next15Standard: false,
+      },
     ];
 
     directories.forEach(dir => {
@@ -382,10 +405,7 @@ export class ProjectStructureDetector {
   }
 
   private findDirectory(name: string): string {
-    const possiblePaths = [
-      path.join(this.rootPath, name),
-      path.join(this.rootPath, 'src', name)
-    ];
+    const possiblePaths = [path.join(this.rootPath, name), path.join(this.rootPath, 'src', name)];
 
     for (const dirPath of possiblePaths) {
       if (fs.existsSync(dirPath)) {
@@ -430,19 +450,44 @@ export class ProjectStructureDetector {
 
   private getAppRouterSpecialFiles(appPath: string): string[] {
     const specialFiles = [
-      'layout.js', 'layout.jsx', 'layout.ts', 'layout.tsx',
-      'page.js', 'page.jsx', 'page.ts', 'page.tsx',
-      'loading.js', 'loading.jsx', 'loading.ts', 'loading.tsx',
-      'error.js', 'error.jsx', 'error.ts', 'error.tsx',
-      'not-found.js', 'not-found.jsx', 'not-found.ts', 'not-found.tsx',
-      'global-error.js', 'global-error.jsx', 'global-error.ts', 'global-error.tsx',
-      'route.js', 'route.ts',
-      'template.js', 'template.jsx', 'template.ts', 'template.tsx',
-      'default.js', 'default.jsx', 'default.ts', 'default.tsx'
+      'layout.js',
+      'layout.jsx',
+      'layout.ts',
+      'layout.tsx',
+      'page.js',
+      'page.jsx',
+      'page.ts',
+      'page.tsx',
+      'loading.js',
+      'loading.jsx',
+      'loading.ts',
+      'loading.tsx',
+      'error.js',
+      'error.jsx',
+      'error.ts',
+      'error.tsx',
+      'not-found.js',
+      'not-found.jsx',
+      'not-found.ts',
+      'not-found.tsx',
+      'global-error.js',
+      'global-error.jsx',
+      'global-error.ts',
+      'global-error.tsx',
+      'route.js',
+      'route.ts',
+      'template.js',
+      'template.jsx',
+      'template.ts',
+      'template.tsx',
+      'default.js',
+      'default.jsx',
+      'default.ts',
+      'default.tsx',
     ];
 
     const foundFiles: string[] = [];
-    
+
     try {
       const allFiles = this.getAllFilesRecursive(appPath);
       specialFiles.forEach(file => {
@@ -459,16 +504,34 @@ export class ProjectStructureDetector {
 
   private getPagesRouterSpecialFiles(pagesPath: string): string[] {
     const specialFiles = [
-      '_app.js', '_app.jsx', '_app.ts', '_app.tsx',
-      '_document.js', '_document.jsx', '_document.ts', '_document.tsx',
-      '_error.js', '_error.jsx', '_error.ts', '_error.tsx',
-      '404.js', '404.jsx', '404.ts', '404.tsx',
-      '500.js', '500.jsx', '500.ts', '500.tsx',
-      'index.js', 'index.jsx', 'index.ts', 'index.tsx'
+      '_app.js',
+      '_app.jsx',
+      '_app.ts',
+      '_app.tsx',
+      '_document.js',
+      '_document.jsx',
+      '_document.ts',
+      '_document.tsx',
+      '_error.js',
+      '_error.jsx',
+      '_error.ts',
+      '_error.tsx',
+      '404.js',
+      '404.jsx',
+      '404.ts',
+      '404.tsx',
+      '500.js',
+      '500.jsx',
+      '500.ts',
+      '500.tsx',
+      'index.js',
+      'index.jsx',
+      'index.ts',
+      'index.tsx',
     ];
 
     const foundFiles: string[] = [];
-    
+
     try {
       const files = fs.readdirSync(pagesPath);
       specialFiles.forEach(file => {
@@ -485,14 +548,14 @@ export class ProjectStructureDetector {
 
   private getAllFilesRecursive(dirPath: string): string[] {
     const files: string[] = [];
-    
+
     try {
       const items = fs.readdirSync(dirPath);
-      
+
       for (const item of items) {
         const fullPath = path.join(dirPath, item);
         const stat = fs.statSync(fullPath);
-        
+
         if (stat.isDirectory()) {
           files.push(...this.getAllFilesRecursive(fullPath));
         } else {
@@ -502,52 +565,66 @@ export class ProjectStructureDetector {
     } catch {
       // Ignore errors
     }
-    
+
     return files;
   }
 
   private mapRouterType(routerType: string): 'app-router' | 'pages-router' | 'mixed' | 'unknown' {
     switch (routerType) {
-      case 'app': return 'app-router';
-      case 'pages': return 'pages-router';
-      case 'mixed': return 'mixed';
-      default: return 'unknown';
+      case 'app':
+        return 'app-router';
+      case 'pages':
+        return 'pages-router';
+      case 'mixed':
+        return 'mixed';
+      default:
+        return 'unknown';
     }
   }
 
   private generateRecommendations(
-    routerType: string, 
-    isNext15: boolean, 
+    routerType: string,
+    isNext15: boolean,
     standardDirectories: StandardDirectory[]
   ): string[] {
     const recommendations: string[] = [];
 
     // Router recommendations
     if (routerType === 'unknown') {
-      recommendations.push('Consider setting up either App Router (recommended) or Pages Router structure');
+      recommendations.push(
+        'Consider setting up either App Router (recommended) or Pages Router structure'
+      );
     }
 
     if (routerType === 'pages' && isNext15) {
-      recommendations.push('Consider migrating to App Router for Next.js 15+ features and better performance');
+      recommendations.push(
+        'Consider migrating to App Router for Next.js 15+ features and better performance'
+      );
     }
 
     // Directory structure recommendations
     const missingRecommended = standardDirectories.filter(d => d.isRecommended && !d.exists);
     if (missingRecommended.length > 0) {
-      recommendations.push(`Consider creating recommended directories: ${missingRecommended.map(d => d.name).join(', ')}`);
+      recommendations.push(
+        `Consider creating recommended directories: ${missingRecommended.map(d => d.name).join(', ')}`
+      );
     }
 
     // Next.js 15 specific recommendations
     if (isNext15) {
       const missingNext15 = standardDirectories.filter(d => d.next15Standard && !d.exists);
       if (missingNext15.length > 0) {
-        recommendations.push(`For Next.js 15+ compliance, consider adding: ${missingNext15.map(d => d.name).join(', ')}`);
+        recommendations.push(
+          `For Next.js 15+ compliance, consider adding: ${missingNext15.map(d => d.name).join(', ')}`
+        );
       }
     }
 
     // src directory recommendation
     if (!this.versionDetector.hasSrcDirectory() && routerType === 'app') {
-      recommendations.push('Consider using src/ directory for better organization in App Router projects');
+      recommendations.push(
+        'Consider using src/ directory for better organization in App Router projects'
+      );
     }
 
     return recommendations;
@@ -569,7 +646,7 @@ export class ProjectStructureDetector {
       routerDirectories: [],
       standardDirectories: [],
       isNext15Structure: false,
-      recommendations: []
+      recommendations: [],
     };
   }
-} 
+}

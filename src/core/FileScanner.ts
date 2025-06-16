@@ -594,15 +594,27 @@ export class FileScanner {
     const lowerPath = filePath.toLowerCase();
 
     // Check which libraries are relevant to this file
-    if (lowerPath.includes('prisma/')) {libraries.push('Prisma');}
-    if (lowerPath.includes('schema.zmodel')) {libraries.push('ZenStack');}
-    if (lowerPath.includes('trpc') || lowerPath.includes('api/')) {libraries.push('tRPC');}
-    if (lowerPath.includes('auth')) {libraries.push('Authentication');}
-    if (lowerPath.includes('ui/') || lowerPath.includes('components/'))
-      {libraries.push('UI Components');}
-    if (lowerPath.includes('tailwind')) {libraries.push('Tailwind CSS');}
-    if (lowerPath.includes('query') || lowerPath.includes('mutation'))
-      {libraries.push('Data Fetching');}
+    if (lowerPath.includes('prisma/')) {
+      libraries.push('Prisma');
+    }
+    if (lowerPath.includes('schema.zmodel')) {
+      libraries.push('ZenStack');
+    }
+    if (lowerPath.includes('trpc') || lowerPath.includes('api/')) {
+      libraries.push('tRPC');
+    }
+    if (lowerPath.includes('auth')) {
+      libraries.push('Authentication');
+    }
+    if (lowerPath.includes('ui/') || lowerPath.includes('components/')) {
+      libraries.push('UI Components');
+    }
+    if (lowerPath.includes('tailwind')) {
+      libraries.push('Tailwind CSS');
+    }
+    if (lowerPath.includes('query') || lowerPath.includes('mutation')) {
+      libraries.push('Data Fetching');
+    }
 
     return libraries;
   }
@@ -730,28 +742,37 @@ export class FileScanner {
     const routerType = this.detectedProject?.customConfig?.routerType || RouterType.UNKNOWN;
 
     // A: Core Configurations (Priority 80-100)
-    if (lowerPath.includes('next.config.'))
-      {return { priority: 100, category: FileCategory.CORE_CONFIGURATIONS };}
-    if (fileName === 'package.json')
-      {return { priority: 95, category: FileCategory.CORE_CONFIGURATIONS };}
-    if (lowerPath.includes('tsconfig.json') || lowerPath.includes('jsconfig.json'))
-      {return { priority: 90, category: FileCategory.CORE_CONFIGURATIONS };}
-    if (lowerPath.includes('middleware.'))
-      {return { priority: 88, category: FileCategory.CORE_CONFIGURATIONS };}
-    if (lowerPath.includes('instrumentation.'))
-      {return { priority: 85, category: FileCategory.CORE_CONFIGURATIONS };}
+    if (lowerPath.includes('next.config.')) {
+      return { priority: 100, category: FileCategory.CORE_CONFIGURATIONS };
+    }
+    if (fileName === 'package.json') {
+      return { priority: 95, category: FileCategory.CORE_CONFIGURATIONS };
+    }
+    if (lowerPath.includes('tsconfig.json') || lowerPath.includes('jsconfig.json')) {
+      return { priority: 90, category: FileCategory.CORE_CONFIGURATIONS };
+    }
+    if (lowerPath.includes('middleware.')) {
+      return { priority: 88, category: FileCategory.CORE_CONFIGURATIONS };
+    }
+    if (lowerPath.includes('instrumentation.')) {
+      return { priority: 85, category: FileCategory.CORE_CONFIGURATIONS };
+    }
 
     // T3 Stack and modern Next.js patterns (Priority 82-87)
-    if (lowerPath.includes('src/env.') || fileName === 'env.mjs' || fileName === 'env.js')
-      {return { priority: 87, category: FileCategory.CORE_CONFIGURATIONS };}
+    if (lowerPath.includes('src/env.') || fileName === 'env.mjs' || fileName === 'env.js') {
+      return { priority: 87, category: FileCategory.CORE_CONFIGURATIONS };
+    }
 
     // Database configurations (Priority 75-85)
-    if (lowerPath.includes('schema.zmodel') || lowerPath.includes('.zmodel'))
-      {return { priority: 85, category: FileCategory.ZENSTACK_SCHEMA };}
-    if (lowerPath.includes('prisma/schema.prisma') || fileName === 'schema.prisma')
-      {return { priority: 83, category: FileCategory.DATABASE_SCHEMA };}
-    if (lowerPath.includes('drizzle.config.'))
-      {return { priority: 81, category: FileCategory.DATABASE_SCHEMA };}
+    if (lowerPath.includes('schema.zmodel') || lowerPath.includes('.zmodel')) {
+      return { priority: 85, category: FileCategory.ZENSTACK_SCHEMA };
+    }
+    if (lowerPath.includes('prisma/schema.prisma') || fileName === 'schema.prisma') {
+      return { priority: 83, category: FileCategory.DATABASE_SCHEMA };
+    }
+    if (lowerPath.includes('drizzle.config.')) {
+      return { priority: 81, category: FileCategory.DATABASE_SCHEMA };
+    }
 
     // Authentication configurations (Priority 75-82)
     if (lowerPath.includes('src/server/auth.') || lowerPath.includes('src/lib/auth.')) {
@@ -771,12 +792,15 @@ export class FileScanner {
     }
 
     // API Layer configurations (Priority 70-80)
-    if (lowerPath.includes('src/server/api/trpc.'))
-      {return { priority: 80, category: FileCategory.TRPC_PROCEDURES };}
-    if (lowerPath.includes('src/server/api/routers/'))
-      {return { priority: 78, category: FileCategory.TRPC_PROCEDURES };}
-    if (lowerPath.includes('src/server/api/root.'))
-      {return { priority: 76, category: FileCategory.TRPC_PROCEDURES };}
+    if (lowerPath.includes('src/server/api/trpc.')) {
+      return { priority: 80, category: FileCategory.TRPC_PROCEDURES };
+    }
+    if (lowerPath.includes('src/server/api/routers/')) {
+      return { priority: 78, category: FileCategory.TRPC_PROCEDURES };
+    }
+    if (lowerPath.includes('src/server/api/root.')) {
+      return { priority: 76, category: FileCategory.TRPC_PROCEDURES };
+    }
     if (lowerPath.includes('graphql/schema') || lowerPath.includes('schema.graphql')) {
       return { priority: 75, category: FileCategory.GRAPHQL_SCHEMA };
     }
@@ -831,8 +855,9 @@ export class FileScanner {
       if (lowerPath.includes('pages/api/') && !lowerPath.includes('auth/')) {
         return { priority: 70, category: FileCategory.REST_API_ROUTES };
       }
-      if (lowerPath.includes('pages/'))
-        {return { priority: 65, category: FileCategory.PAGES_ROUTER_STRUCTURE };}
+      if (lowerPath.includes('pages/')) {
+        return { priority: 65, category: FileCategory.PAGES_ROUTER_STRUCTURE };
+      }
     }
 
     // Fallback for unknown router type - detect based on file paths
@@ -882,11 +907,36 @@ export class FileScanner {
       return { priority: 55, category: FileCategory.API_LAYER };
     }
 
+    // Tests (Priority 25-30) - Check BEFORE components to avoid conflicts
+    if (
+      lowerPath.includes('.test.') ||
+      lowerPath.includes('.spec.') ||
+      lowerPath.includes('__tests__/')
+    ) {
+      return { priority: 28, category: FileCategory.TESTS };
+    }
+    if (
+      lowerPath.includes('cypress/') ||
+      lowerPath.includes('playwright/') ||
+      lowerPath.includes('e2e/')
+    ) {
+      return { priority: 25, category: FileCategory.TESTS };
+    }
+
     // Components (Priority 48-55)
     if (lowerPath.includes('components/ui/') || lowerPath.includes('src/components/ui/')) {
-      return { priority: 55, category: FileCategory.UI_COMPONENTS };
+      return {
+        priority: isClientComponent ? 55 : 52,
+        category: isClientComponent
+          ? FileCategory.CLIENT_COMPONENTS
+          : FileCategory.SERVER_COMPONENTS,
+      };
     }
-    if (lowerPath.includes('component') || lowerPath.includes('/ui/')) {
+    if (
+      lowerPath.includes('component') ||
+      lowerPath.includes('/ui/') ||
+      lowerPath.includes('src/components/')
+    ) {
       return {
         priority: isClientComponent ? 52 : 50,
         category: isClientComponent
@@ -935,22 +985,6 @@ export class FileScanner {
     }
     if (lowerPath.includes('.css') || lowerPath.includes('.scss') || lowerPath.includes('.sass')) {
       return { priority: 32, category: FileCategory.STYLING };
-    }
-
-    // Tests (Priority 25-30)
-    if (
-      lowerPath.includes('.test.') ||
-      lowerPath.includes('.spec.') ||
-      lowerPath.includes('__tests__/')
-    ) {
-      return { priority: 28, category: FileCategory.TESTS };
-    }
-    if (
-      lowerPath.includes('cypress/') ||
-      lowerPath.includes('playwright/') ||
-      lowerPath.includes('e2e/')
-    ) {
-      return { priority: 25, category: FileCategory.TESTS };
     }
 
     // Configuration files (Priority 18-25)
@@ -1007,6 +1041,102 @@ export class FileScanner {
       totalSize += file.size;
     });
 
+    // Generate detected features with proper mapping
+    const detectedFeatures: string[] = [];
+
+    if (this.detectedProject) {
+      const { detectedLibraries, structureType } = this.detectedProject;
+
+      // Add structure type
+      if (structureType === ProjectStructureType.T3_STACK) {
+        detectedFeatures.push('T3 Stack');
+      }
+
+      // Map library enums to user-friendly names
+      detectedLibraries.auth.forEach(auth => {
+        switch (auth) {
+          case AuthLibrary.NEXTAUTH:
+            detectedFeatures.push('NextAuth.js');
+            break;
+          case AuthLibrary.CLERK:
+            detectedFeatures.push('Clerk');
+            break;
+          // Add other auth libraries as needed
+        }
+      });
+
+      detectedLibraries.database.forEach(db => {
+        switch (db) {
+          case DatabaseProvider.PRISMA:
+            detectedFeatures.push('Prisma ORM');
+            break;
+          case DatabaseProvider.ZENSTACK:
+            detectedFeatures.push('ZenStack');
+            break;
+          case DatabaseProvider.DRIZZLE:
+            detectedFeatures.push('Drizzle ORM');
+            break;
+          case DatabaseProvider.SUPABASE:
+            detectedFeatures.push('Supabase');
+            break;
+        }
+      });
+
+      detectedLibraries.api.forEach(api => {
+        switch (api) {
+          case APIPattern.TRPC:
+            detectedFeatures.push('tRPC');
+            break;
+          case APIPattern.GRAPHQL:
+            detectedFeatures.push('GraphQL');
+            break;
+        }
+      });
+
+      detectedLibraries.ui.forEach(ui => {
+        switch (ui) {
+          case UILibrary.SHADCN_UI:
+            detectedFeatures.push('shadcn/ui');
+            break;
+          case UILibrary.RADIX_UI:
+            detectedFeatures.push('Radix UI');
+            break;
+          case UILibrary.HEADLESS_UI:
+            detectedFeatures.push('Headless UI');
+            break;
+          case UILibrary.CHAKRA_UI:
+            detectedFeatures.push('Chakra UI');
+            break;
+          case UILibrary.MANTINE:
+            detectedFeatures.push('Mantine');
+            break;
+          case UILibrary.ANTD:
+            detectedFeatures.push('Ant Design');
+            break;
+          case UILibrary.MATERIAL_UI:
+            detectedFeatures.push('Material-UI');
+            break;
+          case UILibrary.NEXTUI:
+            detectedFeatures.push('NextUI');
+            break;
+        }
+      });
+
+      // Add styling libraries
+      detectedLibraries.styling.forEach(style => {
+        detectedFeatures.push(style);
+      });
+
+      // Add data fetching libraries
+      detectedLibraries.dataFetching.forEach(df => {
+        detectedFeatures.push(df);
+      });
+
+      // Add basic project info
+      detectedFeatures.push(`Next.js ${this.detectedProject.nextjsVersion}`);
+      detectedFeatures.push(`Package Manager: ${this.detectedProject.packageManager}`);
+    }
+
     return {
       totalFiles: files.length,
       totalTokens,
@@ -1015,18 +1145,7 @@ export class FileScanner {
       generatedAt: new Date(),
       processingTime: Date.now() - startTime,
       projectDetection: this.detectedProject,
-      detectedFeatures: this.detectedProject
-        ? [
-            ...this.detectedProject.detectedLibraries.auth.map(a => `Auth: ${a}`),
-            ...this.detectedProject.detectedLibraries.ui.map(u => `UI: ${u}`),
-            ...this.detectedProject.detectedLibraries.database.map(d => `Database: ${d}`),
-            ...this.detectedProject.detectedLibraries.api.map(a => `API: ${a}`),
-            ...this.detectedProject.detectedLibraries.dataFetching,
-            ...this.detectedProject.detectedLibraries.styling,
-            `Package Manager: ${this.detectedProject.packageManager}`,
-            `Next.js: ${this.detectedProject.nextjsVersion}`,
-          ]
-        : [],
+      detectedFeatures,
     };
   }
 }

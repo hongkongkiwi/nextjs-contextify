@@ -63,7 +63,11 @@ export class ConfigManager {
     return this.config.get(key, defaultValue);
   }
 
-  async set<T>(key: keyof ExtensionConfig, value: T, target?: vscode.ConfigurationTarget): Promise<void> {
+  async set<T>(
+    key: keyof ExtensionConfig,
+    value: T,
+    target?: vscode.ConfigurationTarget
+  ): Promise<void> {
     try {
       await this.config.update(key, value, target);
       Logger.debug(`Configuration updated: ${key} = ${value}`);
@@ -150,4 +154,4 @@ export class ConfigManager {
 
     Logger.info('Configuration reset to defaults');
   }
-} 
+}

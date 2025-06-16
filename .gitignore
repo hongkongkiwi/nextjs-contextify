@@ -18,6 +18,7 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.vscode-test
 
 # TypeScript cache
 *.tsbuildinfo

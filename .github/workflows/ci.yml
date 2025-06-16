@@ -8,6 +8,11 @@ on:
   release:
     types: [ published ]
 
+# Ensure only one CI run per branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test & Lint
@@ -34,6 +39,14 @@ jobs:
     - name: Install dependencies
       run: pnpm install
       
+    - name: Setup Xvfb for VS Code tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+      if: matrix.node-version == '22.x'
+      
     - name: Run linting
       run: pnpm run lint
       
@@ -46,15 +59,22 @@ jobs:
     - name: Run unit tests
       run: pnpm run test:unit
       
+    - name: Run integration tests
+      run: pnpm run test:ci
+      if: matrix.node-version == '22.x'
+      env:
+        DISPLAY: ":99"
+      
     - name: Run test coverage
       run: pnpm run test:coverage
       if: matrix.node-version == '22.x'
       
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5.4.3
       if: matrix.node-version == '22.x'
       with:
-        file: ./coverage/lcov.info
+        files: ./coverage/lcov.info
+        token: ${{ secrets.CODECOV_TOKEN }}
         
     - name: Security audit
       run: pnpm run security:check
@@ -120,7 +140,7 @@ jobs:
       run: pnpm install
       
     - name: Download VSIX artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4.3.0
       with:
         name: vsix-package
         
@@ -187,7 +207,7 @@ jobs:
       run: pnpm run docs:generate
       
     - name: Deploy docs to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
+      uses: peaceiris/actions-gh-pages@v4.0.0
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

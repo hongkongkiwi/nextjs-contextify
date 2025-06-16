@@ -51,11 +51,11 @@ export class PerformanceMonitor {
   private static logPerformance(metric: PerformanceMetrics): void {
     const { operation, duration, fileCount, memory } = metric;
     const filesPerSec = fileCount ? (fileCount / (duration / 1000)).toFixed(0) : 'N/A';
-    
+
     Logger.debug(
       `Performance: ${operation} took ${duration.toFixed(2)}ms` +
-      (fileCount ? ` (${fileCount} files, ${filesPerSec} files/sec)` : '') +
-      (memory ? ` Memory: +${(memory.heapUsed / 1024 / 1024).toFixed(2)}MB` : '')
+        (fileCount ? ` (${fileCount} files, ${filesPerSec} files/sec)` : '') +
+        (memory ? ` Memory: +${(memory.heapUsed / 1024 / 1024).toFixed(2)}MB` : '')
     );
 
     // Warn on slow operations
@@ -74,12 +74,13 @@ export class PerformanceMonitor {
     totalOperations: number;
   } {
     const operationMetrics = this.metrics.filter(m => m.operation === operation);
-    
+
     if (operationMetrics.length === 0) {
       return { avgDuration: 0, avgFilesPerSec: 0, totalOperations: 0 };
     }
 
-    const avgDuration = operationMetrics.reduce((sum, m) => sum + m.duration, 0) / operationMetrics.length;
+    const avgDuration =
+      operationMetrics.reduce((sum, m) => sum + m.duration, 0) / operationMetrics.length;
     const totalFiles = operationMetrics.reduce((sum, m) => sum + (m.fileCount || 0), 0);
     const totalTime = operationMetrics.reduce((sum, m) => sum + m.duration, 0) / 1000;
     const avgFilesPerSec = totalFiles / totalTime;
@@ -95,4 +96,4 @@ export class PerformanceMonitor {
     this.metrics = [];
     Logger.debug('Performance metrics cleared');
   }
-} 
+}
