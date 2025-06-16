@@ -31,7 +31,8 @@ jobs:
         run: pnpm run lint
         
       - name: Run tests
-        run: pnpm run test
+        run: pnpm run test:unit
+        # Only run unit tests here - integration tests are covered by main CI workflow
         
       - name: Build extension
         run: pnpm run build
