@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { IgnoreService } from '../utils/IgnoreService';
+import { SharedUtilities } from '../utils/SharedUtilities';
 import {
   FileInfo,
   ContextStats,
@@ -53,7 +54,7 @@ export class FileScanner {
     // Process files with enhanced categorization
     const processedFiles = files.map(file => {
       const { priority, category } = this.categorizeFile(file.path, file.content);
-      const tokens = this.estimateTokens(file.content);
+      const tokens = SharedUtilities.estimateTokens(file.content);
       const size = Buffer.byteLength(file.content, 'utf8');
 
       return {
@@ -660,7 +661,7 @@ export class FileScanner {
   }
 
   private shouldIncludeFile(fileName: string, _relativePath: string): boolean {
-    const ext = path.extname(fileName).toLowerCase();
+    const ext = SharedUtilities.getFileExtension(fileName);
     const allowedExtensions = [
       '.js',
       '.jsx',
@@ -1025,10 +1026,7 @@ export class FileScanner {
     return { priority: 10, category: FileCategory.OTHER_FILES };
   }
 
-  private estimateTokens(content: string): number {
-    // Rough estimation: ~4 characters per token for code
-    return Math.ceil(content.length / 4);
-  }
+  // Removed redundant estimateTokens method - now using SharedUtilities.estimateTokens
 
   private generateStats(files: FileInfo[], startTime: number): ContextStats {
     const categories: Record<string, number> = {};

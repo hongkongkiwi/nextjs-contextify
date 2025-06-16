@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from '../../utils/Logger';
+import { SharedUtilities } from '../../utils/SharedUtilities';
 
 export interface ErrorContext {
   operation: string;
@@ -505,11 +506,9 @@ Metadata: ${context.metadata ? JSON.stringify(context.metadata, null, 2) : 'None
 
   private static async retryWithBackoff(context: ErrorContext): Promise<any> {
     // Simple retry logic with exponential backoff
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        await delay(Math.pow(2, attempt) * 1000); // 2s, 4s, 8s
+        await SharedUtilities.sleep(Math.pow(2, attempt) * 1000); // 2s, 4s, 8s
         Logger.info(`Retry attempt ${attempt} for ${context.operation}`);
         
         // The actual retry would need to be implemented by the calling code

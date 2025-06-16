@@ -16,6 +16,7 @@ import {
   FileCategory,
 } from '../core/types';
 import { Logger } from '../utils/Logger';
+import { SharedUtilities } from '../utils/SharedUtilities';
 import { VersionDetector, PackageVersions } from './VersionDetector';
 import { EnvironmentDetector } from './EnvironmentDetector';
 import { ProjectStructureDetector } from './ProjectStructureDetector';
@@ -308,7 +309,7 @@ export class UniversalContextGenerator {
   private async generateStats(optimizedFiles: FileInfo[], originalFiles: FileInfo[]): Promise<ContextStats> {
     const totalSize = optimizedFiles.reduce((sum: number, f: FileInfo) => sum + f.size, 0);
     const totalTokens = optimizedFiles.reduce(
-      (sum: number, f: FileInfo) => sum + (f.tokens || this.estimateTokens(f.content)),
+      (sum: number, f: FileInfo) => sum + (f.tokens || SharedUtilities.estimateTokens(f.content)),
       0
     );
 
@@ -386,7 +387,7 @@ export class UniversalContextGenerator {
       timestamp
     );
 
-    const totalTokens = this.estimateTokens(formattedContent);
+    const totalTokens = SharedUtilities.estimateTokens(formattedContent);
     const processingTime = Date.now() - startTime;
 
     return {
@@ -420,12 +421,12 @@ export class UniversalContextGenerator {
       `- Package Manager: ${stats.projectDetection?.packageManager || 'Unknown'}`,
       '',
       '## File Structure',
-      files.map(f => `- ${f.path} (${this.getFileLanguage(f.path)})`).join('\n'),
+      files.map(f => `- ${f.path} (${SharedUtilities.getFileLanguage(f.path)})`).join('\n'),
       '',
       '## Code Files',
       ...files.filter(f => f.category.includes('Components') || f.category.includes('TypeScript')).slice(0, 20).map(f => [
         `### ${f.path}`,
-        '```' + this.getFileLanguage(f.path),
+        '```' + SharedUtilities.getFileLanguage(f.path),
         f.content.substring(0, 2000), // Limit content
         '```',
         ''
@@ -462,7 +463,7 @@ ${files.map(f => `- ${f.path}`).join('\n')}
       stats: {
         totalFiles: files.length,
         totalSize: stats.totalSize,
-        totalTokens: this.estimateTokens(content),
+        totalTokens: SharedUtilities.estimateTokens(content),
         excludedFiles: 0,
         processingTime: 0
       }
@@ -484,13 +485,13 @@ Please check the error logs for more details.
       assistantType: type,
       filename: `context-${type.toLowerCase()}-emergency.md`,
       content,
-      stats: {
-        totalFiles: 0,
-        totalSize: 0,
-        totalTokens: this.estimateTokens(content),
-        excludedFiles: 0,
-        processingTime: 0
-      }
+              stats: {
+          totalFiles: 0,
+          totalSize: 0,
+          totalTokens: SharedUtilities.estimateTokens(content),
+          excludedFiles: 0,
+          processingTime: 0
+        }
     }));
   }
 
@@ -516,7 +517,7 @@ Please check the error logs for more details.
                   priority: 50,
                   category: this.getFileCategory(entry),
                   size: stat.size,
-                  tokens: Math.ceil(content.length / 4)
+                  tokens: SharedUtilities.estimateTokens(content)
                 });
               } else if (stat.isDirectory() && !this.shouldExcludeDirectory(entry)) {
                 await scanDir(path.join(dir, entry), relativePath);
@@ -539,42 +540,22 @@ Please check the error logs for more details.
   }
 
   private shouldIncludeFile(filename: string): boolean {
-    const ext = path.extname(filename).toLowerCase();
-    const includedExtensions = ['.ts', '.tsx', '.js', '.jsx', '.json', '.md', '.yml', '.yaml'];
-    return includedExtensions.includes(ext);
+    return SharedUtilities.shouldIncludeFile(filename);
   }
 
   private shouldExcludeDirectory(dirname: string): boolean {
-    const excludedDirs = ['node_modules', '.git', '.next', 'build', 'dist', '.vscode'];
-    return excludedDirs.includes(dirname);
+    return SharedUtilities.shouldExcludeDirectory(dirname);
   }
 
   private getFileCategory(filename: string): FileCategory {
-    const ext = path.extname(filename).toLowerCase();
+    const ext = SharedUtilities.getFileExtension(filename);
     if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) return FileCategory.TYPESCRIPT_FILES;
     if (['.json', '.yml', '.yaml'].includes(ext)) return FileCategory.ENV_CONFIG;
     if (ext === '.md') return FileCategory.DOCUMENTATION;
     return FileCategory.OTHER_FILES;
   }
 
-  private getFileLanguage(filename: string): string {
-    const ext = path.extname(filename).toLowerCase();
-    const languageMap: Record<string, string> = {
-      '.ts': 'typescript',
-      '.tsx': 'typescript',
-      '.js': 'javascript',
-      '.jsx': 'javascript',
-      '.json': 'json',
-      '.md': 'markdown',
-      '.yml': 'yaml',
-      '.yaml': 'yaml'
-    };
-    return languageMap[ext] || 'text';
-  }
-
-  private estimateTokens(content: string): number {
-    return Math.ceil(content.length / 4);
-  }
+  // Removed redundant methods - now using SharedUtilities
 
   private mapProjectStructureType(type: string): ProjectStructureType {
     switch (type) {

@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Logger } from '../../utils/Logger';
+import { SharedUtilities } from '../../utils/SharedUtilities';
 
 export interface TestCase {
   name: string;
@@ -365,7 +366,7 @@ export class TestRunner {
         if (test.memory) {
           const memoryUsed = test.memory.after - test.memory.before;
           const peakIncrease = test.memory.peak - test.memory.before;
-          Logger.info(`  ${test.name}: ${test.duration}ms, Memory: +${this.formatBytes(memoryUsed)} (peak: +${this.formatBytes(peakIncrease)})`);
+          Logger.info(`  ${test.name}: ${test.duration}ms, Memory: +${SharedUtilities.formatBytes(memoryUsed)} (peak: +${SharedUtilities.formatBytes(peakIncrease)})`);
         } else {
           Logger.info(`  ${test.name}: ${test.duration}ms`);
         }
@@ -373,13 +374,7 @@ export class TestRunner {
     }
   }
 
-  private static formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  }
+  // Removed redundant formatBytes method - now using SharedUtilities.formatBytes
 
   private static async generateReport(summary: any): Promise<void> {
     try {
@@ -482,8 +477,8 @@ export class TestRunner {
                 ${result.error ? `<div class="error">Error: ${result.error.message}</div>` : ''}
                 ${result.memory ? `
                     <div class="performance">
-                        Memory: ${this.formatBytes(result.memory.after - result.memory.before)} used, 
-                        peak: ${this.formatBytes(result.memory.peak - result.memory.before)}
+                                Memory: ${SharedUtilities.formatBytes(result.memory.after - result.memory.before)} used,
+        peak: ${SharedUtilities.formatBytes(result.memory.peak - result.memory.before)}
                     </div>
                 ` : ''}
             </div>

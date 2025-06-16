@@ -3,6 +3,7 @@ import * as path from 'path';
 import { createReadStream } from 'fs';
 import { FileInfo } from '../../core/types';
 import { Logger } from '../../utils/Logger';
+import { SharedUtilities } from '../../utils/SharedUtilities';
 
 export interface ProcessingOptions {
   maxFileSize?: number;
@@ -71,7 +72,7 @@ export class FileContentProcessor {
       this.memoryUsage = currentMemory;
       
       if (currentMemory > (options.maxMemoryUsage || this.DEFAULT_MAX_MEMORY)) {
-        Logger.warn(`Memory usage exceeded threshold: ${this.formatBytes(currentMemory)}`);
+        Logger.warn(`Memory usage exceeded threshold: ${SharedUtilities.formatBytes(currentMemory)}`);
         // Force garbage collection if available
         if (global.gc) {
           global.gc();
@@ -234,7 +235,7 @@ export class FileContentProcessor {
   }
 
   private static preserveCodeStructure(content: string, filePath: string): string {
-    const ext = path.extname(filePath).toLowerCase();
+    const ext = SharedUtilities.getFileExtension(filePath);
     const lines = content.split('\n');
 
     // Limit total lines to prevent memory issues
@@ -330,9 +331,9 @@ export class FileContentProcessor {
     
     return {
       current,
-      currentFormatted: this.formatBytes(current),
+      currentFormatted: SharedUtilities.formatBytes(current),
       limit,
-      limitFormatted: this.formatBytes(limit),
+      limitFormatted: SharedUtilities.formatBytes(limit),
       percentage: (current / limit) * 100,
     };
   }
@@ -345,20 +346,14 @@ export class FileContentProcessor {
       const beforeGC = process.memoryUsage().heapUsed;
       global.gc();
       const afterGC = process.memoryUsage().heapUsed;
-      Logger.info(`Garbage collection freed ${this.formatBytes(beforeGC - afterGC)}`);
+      Logger.info(`Garbage collection freed ${SharedUtilities.formatBytes(beforeGC - afterGC)}`);
     }
     
     // Clear any internal caches if needed
     this.memoryUsage = process.memoryUsage().heapUsed;
   }
 
-  private static formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  }
+  // Removed redundant formatBytes method - now using SharedUtilities.formatBytes
 
   static getProcessingRecommendations(
     filePaths: string[]
@@ -382,7 +377,7 @@ export class FileContentProcessor {
         }
         
         if (info.size > 5 * 1024 * 1024) { // 5MB
-          warnings.push(`Very large file detected: ${filePath} (${this.formatBytes(info.size)})`);
+          warnings.push(`Very large file detected: ${filePath} (${SharedUtilities.formatBytes(info.size)})`);
         }
       }
 
@@ -390,7 +385,7 @@ export class FileContentProcessor {
       const recommendedBatchSize = Math.max(1, Math.floor(this.DEFAULT_MAX_MEMORY / (totalEstimatedMemory / filePaths.length)));
 
       if (totalEstimatedMemory > this.DEFAULT_MAX_MEMORY) {
-        warnings.push(`Estimated memory usage (${this.formatBytes(totalEstimatedMemory)}) exceeds recommended limit`);
+        warnings.push(`Estimated memory usage (${SharedUtilities.formatBytes(totalEstimatedMemory)}) exceeds recommended limit`);
       }
 
       resolve({

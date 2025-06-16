@@ -1,5 +1,7 @@
+import * as vscode from 'vscode';
 import { FileInfo, TargetLLM } from '../../core/types';
 import { Logger } from '../../utils/Logger';
+import { SharedUtilities } from '../../utils/SharedUtilities';
 
 export interface TokenOptimizationOptions {
   maxTotalFiles?: number;
@@ -198,7 +200,7 @@ export class TokenOptimizer {
         content = this.summarizeContent(content, file.path);
       }
 
-      const newTokens = this.estimateTokens(content);
+      const newTokens = SharedUtilities.estimateTokens(content);
       
       return {
         ...file,
@@ -342,10 +344,7 @@ export class TokenOptimizer {
     return files.reduce((total, file) => total + file.tokens, 0);
   }
 
-  private static estimateTokens(content: string): number {
-    // Rough estimation: 1 token ≈ 4 characters for most content
-    return Math.ceil(content.length / 4);
-  }
+  // Removed redundant estimateTokens method - now using SharedUtilities.estimateTokens
 
   private static calculateCostSavings(
     originalTokens: number, 
@@ -393,5 +392,188 @@ export class TokenOptimizer {
         // User-defined settings
       }
     };
+  }
+
+  /**
+   * Show optimization dialog to user - migrated from legacy TokenOptimizer
+   */
+  static async showOptimizationDialog(): Promise<TokenOptimizationOptions | undefined> {
+    const selections = await vscode.window.showQuickPick(
+      [
+        {
+          label: '🚀 Maximum Savings',
+          description: 'Aggressive optimization - may lose some detail',
+          detail: 'Summarize content, exclude large files, limit to top 20 files (70-80% reduction)',
+          value: 'maximum',
+        },
+        {
+          label: '⚖️ Balanced',
+          description: 'Good balance of savings and completeness',
+          detail: 'Moderate filtering, exclude common bloat (40-60% reduction)',
+          value: 'balanced',
+        },
+        {
+          label: '🛡️ Light',
+          description: 'Light optimization, preserve most content',
+          detail: 'Minimal exclusions, no content modification (10-30% reduction)',
+          value: 'light',
+        },
+        {
+          label: '🔧 Custom',
+          description: 'Choose specific exclusions',
+          detail: 'Select what to exclude manually',
+          value: 'custom',
+        },
+        {
+          label: '📄 Full Context (No Optimization)',
+          description: 'Include everything - highest token cost',
+          detail: 'No optimization applied',
+          value: 'none',
+        },
+      ],
+      {
+        placeHolder: 'Select optimization level to save AI tokens and costs',
+        ignoreFocusOut: true,
+      }
+    );
+
+    if (!selections) {
+      return undefined;
+    }
+
+    const presets = this.getOptimizationPresets();
+
+    switch (selections.value) {
+      case 'maximum':
+        return presets.maximum;
+      case 'balanced':
+        return presets.balanced;
+      case 'light':
+        return presets.light;
+      case 'custom':
+        return await this.showCustomOptimizationDialog();
+      case 'none':
+      default:
+        return {};
+    }
+  }
+
+  /**
+   * Show custom optimization dialog - migrated from legacy TokenOptimizer
+   */
+  private static async showCustomOptimizationDialog(): Promise<TokenOptimizationOptions> {
+    const options: TokenOptimizationOptions = {};
+
+    const DEFAULT_EXCLUSIONS = {
+      technologies: [
+        'prisma', 'zenstack', 'drizzle', 'planetscale', 'supabase', 'firebase',
+        'aws-sdk', 'mongodb', 'express', 'fastify', 'koa', 'hapi',
+      ],
+      fileTypes: [
+        '.test.ts', '.spec.js', '.stories.ts', '.lock', '.log', '.map', 
+        '.d.ts', '.min.js', '.bundle.js', '.chunk.js', '.vendor.js',
+      ],
+      directories: [
+        'node_modules', '.next', '.vercel', '.git', 'dist', 'build', 
+        'coverage', '.nyc_output', '.turbo', '.cache',
+      ],
+    };
+
+    // Ask about technology exclusions
+    const techExclusions = await vscode.window.showQuickPick(
+      DEFAULT_EXCLUSIONS.technologies.map(tech => ({
+        label: tech,
+        description: `Exclude ${tech} related files`,
+        picked: false,
+      })),
+      {
+        placeHolder: 'Select technologies to exclude (saves tokens)',
+        canPickMany: true,
+        ignoreFocusOut: true,
+      }
+    );
+
+    if (techExclusions && techExclusions.length > 0) {
+      options.excludeTechnologies = techExclusions.map(item => item.label);
+    }
+
+    // Ask about file type exclusions
+    const fileTypeExclusions = await vscode.window.showQuickPick(
+      DEFAULT_EXCLUSIONS.fileTypes.map(ext => ({
+        label: ext,
+        description: `Exclude ${ext} files`,
+        picked: ['.test.ts', '.spec.js', '.stories.ts'].includes(ext),
+      })),
+      {
+        placeHolder: 'Select file types to exclude',
+        canPickMany: true,
+        ignoreFocusOut: true,
+      }
+    );
+
+    if (fileTypeExclusions && fileTypeExclusions.length > 0) {
+      options.excludeFileTypes = fileTypeExclusions.map(item => item.label);
+    }
+
+    // Ask about content optimization
+    const contentOpts = await vscode.window.showQuickPick(
+      [
+        {
+          label: 'Summarize file contents',
+          description: 'Extract key parts only (70% token reduction)',
+          picked: false,
+        },
+        {
+          label: 'Remove comments',
+          description: 'Strip code comments (10-20% reduction)',
+          picked: false,
+        },
+        {
+          label: 'Remove empty lines',
+          description: 'Strip empty lines (5-10% reduction)',
+          picked: false,
+        },
+        {
+          label: 'Exclude large files (>50KB)',
+          description: 'Skip files over 50KB',
+          picked: true,
+        },
+      ],
+      {
+        placeHolder: 'Select content optimizations',
+        canPickMany: true,
+        ignoreFocusOut: true,
+      }
+    );
+
+    if (contentOpts) {
+      options.summarizeContent = contentOpts.some(opt => opt.label.includes('Summarize'));
+      options.removeComments = contentOpts.some(opt => opt.label.includes('comments'));
+      options.removeEmptyLines = contentOpts.some(opt => opt.label.includes('empty lines'));
+      options.excludeLargeFiles = contentOpts.some(opt => opt.label.includes('large files'));
+    }
+
+    // Ask about file limits
+    const fileLimitInput = await vscode.window.showInputBox({
+      prompt: 'Maximum number of files to include (leave empty for no limit)',
+      placeHolder: 'e.g., 50',
+      ignoreFocusOut: true,
+    });
+
+    if (fileLimitInput && !isNaN(parseInt(fileLimitInput))) {
+      options.maxTotalFiles = parseInt(fileLimitInput);
+    }
+
+    const tokenLimitInput = await vscode.window.showInputBox({
+      prompt: 'Maximum tokens per file (leave empty for no limit)',
+      placeHolder: 'e.g., 2000',
+      ignoreFocusOut: true,
+    });
+
+    if (tokenLimitInput && !isNaN(parseInt(tokenLimitInput))) {
+      options.maxTokensPerFile = parseInt(tokenLimitInput);
+    }
+
+    return options;
   }
 } 

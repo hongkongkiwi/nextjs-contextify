@@ -1,4 +1,5 @@
 import { FileInfo, ContextStats, GenerationOptions } from '../../core/types';
+import { SharedUtilities } from '../../utils/SharedUtilities';
 
 export interface FormattedSection {
   title: string;
@@ -70,7 +71,7 @@ export class ContextFormatter {
 | Metric | Value |
 |--------|--------|
 | Total Files | ${stats.totalFiles} |
-| Total Size | ${this.formatBytes(stats.totalSize)} |
+| Total Size | ${SharedUtilities.formatBytes(stats.totalSize)} |
 | Total Tokens | ${stats.totalTokens.toLocaleString()} |
 | Next.js Version | ${stats.versions?.nextjs || 'unknown'} |
 | Structure Type | ${stats.projectDetection?.structureType || 'unknown'} |
@@ -144,9 +145,9 @@ export class ContextFormatter {
     }
 
     return `**File ${index + 1}: \`${file.path}\`**
-*Size: ${this.formatBytes(file.size)} | Priority: ${file.priority} | Category: ${file.category}*
+*Size: ${SharedUtilities.formatBytes(file.size)} | Priority: ${file.priority} | Category: ${file.category}*
 
-\`\`\`${this.detectLanguage(file.path)}
+\`\`\`${SharedUtilities.getFileLanguage(file.path)}
 ${content}
 \`\`\`
 `;
@@ -159,32 +160,7 @@ ${content}
       .join('\n');
   }
 
-  private static detectLanguage(filePath: string): string {
-    const ext = filePath.split('.').pop()?.toLowerCase();
-    const languageMap: Record<string, string> = {
-      'ts': 'typescript',
-      'tsx': 'typescript',
-      'js': 'javascript',
-      'jsx': 'javascript',
-      'json': 'json',
-      'md': 'markdown',
-      'css': 'css',
-      'scss': 'scss',
-      'sass': 'sass',
-      'html': 'html',
-      'yml': 'yaml',
-      'yaml': 'yaml'
-    };
-    return languageMap[ext || ''] || '';
-  }
-
-  private static formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  }
+  // Removed redundant detectLanguage and formatBytes methods - now using SharedUtilities
 
   private static formatDetectedLibraries(libraries: any): string {
     const sections = [];
