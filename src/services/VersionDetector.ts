@@ -90,7 +90,7 @@ export class VersionDetector {
 
   private getNextJsVersion(): string {
     const version = this.getPackageVersion('next');
-    if (!version) return 'unknown';
+    if (!version) {return 'unknown';}
 
     // Clean version string (remove ^ ~ >= etc.)
     const cleanVersion = version.replace(/[\^~>=<]/g, '');
@@ -106,7 +106,7 @@ export class VersionDetector {
 
   private getTailwindVersion(): string | undefined {
     const version = this.getPackageVersion('tailwindcss');
-    if (!version) return undefined;
+    if (!version) {return undefined;}
 
     const cleanVersion = version.replace(/[\^~>=<]/g, '');
     const versionParts = cleanVersion.split('.');
@@ -178,13 +178,13 @@ export class VersionDetector {
 
     for (const pkg of radixPackages) {
       const version = this.getPackageVersion(pkg);
-      if (version) return version;
+      if (version) {return version;}
     }
     return undefined;
   }
 
   private getPackageVersion(packageName: string): string | undefined {
-    if (!this.packageJsonData) return undefined;
+    if (!this.packageJsonData) {return undefined;}
 
     return (
       this.packageJsonData.dependencies?.[packageName] ||
@@ -199,7 +199,7 @@ export class VersionDetector {
 
   isNextJs15OrLater(): boolean {
     const version = this.getNextJsVersion();
-    if (version === 'unknown') return false;
+    if (version === 'unknown') {return false;}
 
     const majorVersion = parseInt(version.split('.')[0]);
     return majorVersion >= 15;
@@ -226,9 +226,9 @@ export class VersionDetector {
     const hasApp = this.hasAppRouter();
     const hasPages = this.hasPagesRouter();
 
-    if (hasApp && hasPages) return 'mixed';
-    if (hasApp) return 'app';
-    if (hasPages) return 'pages';
+    if (hasApp && hasPages) {return 'mixed';}
+    if (hasApp) {return 'app';}
+    if (hasPages) {return 'pages';}
     return 'unknown';
   }
 

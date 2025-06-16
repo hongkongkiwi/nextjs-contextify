@@ -454,7 +454,7 @@ Metadata: ${context.metadata ? JSON.stringify(context.metadata, null, 2) : 'None
 
   // Helper methods for specific recovery scenarios
   private static async handleMissingFile(filePath?: string): Promise<any> {
-    if (!filePath) return null;
+    if (!filePath) {return null;}
 
     // Try to find similar files
     const directory = require('path').dirname(filePath);

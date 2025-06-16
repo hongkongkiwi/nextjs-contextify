@@ -186,7 +186,7 @@ ${content}
   }
 
   private static truncateIfNeeded(content: string, maxSize: number): string {
-    if (content.length <= maxSize) return content;
+    if (content.length <= maxSize) {return content;}
     
     const truncated = content.substring(0, maxSize - 100);
     const lastNewline = truncated.lastIndexOf('\n');

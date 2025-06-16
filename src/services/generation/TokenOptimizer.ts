@@ -172,7 +172,7 @@ export class TokenOptimizer {
     return files.filter(file => {
       return !excludeTechnologies.some(tech => {
         const patterns = this.TECHNOLOGY_PATTERNS[tech as keyof typeof this.TECHNOLOGY_PATTERNS];
-        if (!patterns) return false;
+        if (!patterns) {return false;}
         
         return patterns.some(pattern => 
           file.path.toLowerCase().includes(pattern.toLowerCase())
@@ -261,7 +261,7 @@ export class TokenOptimizer {
     for (const line of lines) {
       const trimmed = line.trim();
       
-      if (trimmed.startsWith('import ') || trimmed.startsWith('export ')) {
+      if (trimmed.startsWith('import ')) {
         imports.push(line);
       } else if (trimmed.startsWith('export ')) {
         exports.push(line);
@@ -322,7 +322,7 @@ export class TokenOptimizer {
 
   private static enforcePerFileTokenLimits(files: FileInfo[], maxTokens: number): FileInfo[] {
     return files.map(file => {
-      if (file.tokens <= maxTokens) return file;
+      if (file.tokens <= maxTokens) {return file;}
       
       // Truncate content to fit token limit
       const ratio = maxTokens / file.tokens;

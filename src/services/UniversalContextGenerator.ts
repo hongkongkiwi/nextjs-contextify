@@ -549,9 +549,9 @@ Please check the error logs for more details.
 
   private getFileCategory(filename: string): FileCategory {
     const ext = SharedUtilities.getFileExtension(filename);
-    if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) return FileCategory.TYPESCRIPT_FILES;
-    if (['.json', '.yml', '.yaml'].includes(ext)) return FileCategory.ENV_CONFIG;
-    if (ext === '.md') return FileCategory.DOCUMENTATION;
+    if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {return FileCategory.TYPESCRIPT_FILES;}
+    if (['.json', '.yml', '.yaml'].includes(ext)) {return FileCategory.ENV_CONFIG;}
+    if (ext === '.md') {return FileCategory.DOCUMENTATION;}
     return FileCategory.OTHER_FILES;
   }
 
@@ -574,9 +574,9 @@ Please check the error logs for more details.
 
   private detectPackageManager(): PackageManager {
     const fs = require('fs');
-    if (fs.existsSync(path.join(this.rootPath, 'pnpm-lock.yaml'))) return PackageManager.PNPM;
-    if (fs.existsSync(path.join(this.rootPath, 'yarn.lock'))) return PackageManager.YARN;
-    if (fs.existsSync(path.join(this.rootPath, 'bun.lockb'))) return PackageManager.BUN;
+    if (fs.existsSync(path.join(this.rootPath, 'pnpm-lock.yaml'))) {return PackageManager.PNPM;}
+    if (fs.existsSync(path.join(this.rootPath, 'yarn.lock'))) {return PackageManager.YARN;}
+    if (fs.existsSync(path.join(this.rootPath, 'bun.lockb'))) {return PackageManager.BUN;}
     return PackageManager.NPM;
   }
 

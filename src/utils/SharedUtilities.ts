@@ -8,7 +8,7 @@ export class SharedUtilities {
    * Consolidated from multiple files to eliminate duplication
    */
   static estimateTokens(content: string): number {
-    if (!content) return 0;
+    if (!content) {return 0;}
     return Math.ceil(content.length / 4);
   }
 
@@ -59,7 +59,7 @@ export class SharedUtilities {
    * Used across multiple services for memory/file size reporting
    */
   static formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {return '0 B';}
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));

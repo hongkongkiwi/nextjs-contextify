@@ -136,7 +136,7 @@ export class WorkspaceManager {
 
   private static async setupWorkspaceWatchers(workspaceId: string): Promise<void> {
     const workspace = this.workspaces.get(workspaceId);
-    if (!workspace) return;
+    if (!workspace) {return;}
 
     const watchers: vscode.FileSystemWatcher[] = [];
 
@@ -308,7 +308,7 @@ export class WorkspaceManager {
     try {
       let count = 0;
       const countFilesRecursive = async (dirPath: string, depth: number = 0): Promise<void> => {
-        if (depth > 10) return; // Prevent infinite recursion
+        if (depth > 10) {return;} // Prevent infinite recursion
         
         const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
         
@@ -404,7 +404,7 @@ export class WorkspaceManager {
     config: Partial<WorkspaceConfiguration>
   ): Promise<void> {
     const workspace = this.workspaces.get(workspaceId);
-    if (!workspace) return;
+    if (!workspace) {return;}
 
     const existingConfig = this.configurations.get(workspaceId) || {};
     const newConfig = { ...existingConfig, ...config };
@@ -448,7 +448,7 @@ export class WorkspaceManager {
 
   static async refreshWorkspace(workspaceId: string): Promise<void> {
     const workspace = this.workspaces.get(workspaceId);
-    if (!workspace) return;
+    if (!workspace) {return;}
 
     Logger.info(`Refreshing workspace: ${workspaceId}`);
 

@@ -402,7 +402,7 @@ export class EnhancedConfigManager {
   ): Promise<void> {
     try {
       const workspace = WorkspaceManager.getWorkspaces().find(w => w.rootPath === workspaceId);
-      if (!workspace) return;
+      if (!workspace) {return;}
       
       const config = vscode.workspace.getConfiguration('nextjs-llm-context', workspace.uri);
       

@@ -197,7 +197,7 @@ export function activate(context: vscode.ExtensionContext) {
     'extension.generateCodeBaseContext',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       // Redirect to the universal context generator
       await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
@@ -208,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
     'extension.generateQuickContext',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       // Enhanced quick XML generation
       await generateContextWithEnhancements(
@@ -235,7 +235,7 @@ export function activate(context: vscode.ExtensionContext) {
     'extension.generateWithPrompts',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       // Enhanced generation with prompts
       await generateContextWithEnhancements(
@@ -270,7 +270,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContextExplorer.refresh',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File explorer refreshed!');
@@ -281,7 +281,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContextExplorer.selectAll',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       fileTreeProvider.selectAll();
       vscode.window.showInformationMessage('All files selected!');
@@ -292,7 +292,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContextExplorer.deselectAll',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       fileTreeProvider.deselectAll();
       vscode.window.showInformationMessage('All files deselected!');
@@ -304,7 +304,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContext.generateContext',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       // Use the universal context generator
       await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
@@ -316,7 +316,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContext.generateUniversalContext',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       // Show AI assistant selection with multi-select support
       const aiOptions = [
@@ -412,7 +412,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContext.createIgnoreFile',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -473,7 +473,7 @@ export function activate(context: vscode.ExtensionContext) {
     'nextjsLlmContext.refresh',
     async () => {
       const validation = await validateProjectForCommand();
-      if (!validation) return;
+      if (!validation) {return;}
       
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File tree refreshed!');

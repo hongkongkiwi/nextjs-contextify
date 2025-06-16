@@ -433,7 +433,7 @@ export class ProjectStructureDetector {
 
   private hasApiRoutesInApp(appPath: string): boolean {
     const apiPath = path.join(appPath, 'api');
-    if (!fs.existsSync(apiPath)) return false;
+    if (!fs.existsSync(apiPath)) {return false;}
 
     try {
       const files = this.getAllFilesRecursive(apiPath);

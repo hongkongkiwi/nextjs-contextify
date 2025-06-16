@@ -89,7 +89,7 @@ export class TestRunner {
     const suitesToRun = this.filterSuites(options);
     let passed = 0;
     let failed = 0;
-    let skipped = 0;
+    const skipped = 0;
 
     for (const [suiteName, suite] of suitesToRun) {
       this.currentSuite = suiteName;
@@ -171,7 +171,7 @@ export class TestRunner {
 
   private static filterTests(tests: TestCase[], options: TestRunOptions): TestCase[] {
     return tests.filter(test => {
-      if (test.skip) return false;
+      if (test.skip) {return false;}
 
       if (options.categories && !options.categories.includes(test.category)) {
         return false;
@@ -179,7 +179,7 @@ export class TestRunner {
 
       if (options.tags && test.tags) {
         const hasMatchingTag = options.tags.some(tag => test.tags!.includes(tag));
-        if (!hasMatchingTag) return false;
+        if (!hasMatchingTag) {return false;}
       }
 
       if (options.pattern && !test.name.includes(options.pattern)) {

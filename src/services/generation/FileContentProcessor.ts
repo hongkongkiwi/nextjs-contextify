@@ -355,7 +355,7 @@ export class FileContentProcessor {
 
   // Removed redundant formatBytes method - now using SharedUtilities.formatBytes
 
-  static getProcessingRecommendations(
+  static async getProcessingRecommendations(
     filePaths: string[]
   ): Promise<{
     shouldUseStreaming: boolean;
@@ -363,37 +363,35 @@ export class FileContentProcessor {
     recommendedBatchSize: number;
     warningsIssues: string[];
   }> {
-    return new Promise(async (resolve) => {
-      let totalEstimatedMemory = 0;
-      let largeFileCount = 0;
-      const warnings: string[] = [];
+    let totalEstimatedMemory = 0;
+    let largeFileCount = 0;
+    const warnings: string[] = [];
 
-      for (const filePath of filePaths) {
-        const info = await this.estimateFileInfo(filePath);
-        totalEstimatedMemory += info.estimatedMemory;
-        
-        if (info.isLarge) {
-          largeFileCount++;
-        }
-        
-        if (info.size > 5 * 1024 * 1024) { // 5MB
-          warnings.push(`Very large file detected: ${filePath} (${SharedUtilities.formatBytes(info.size)})`);
-        }
+    for (const filePath of filePaths) {
+      const info = await this.estimateFileInfo(filePath);
+      totalEstimatedMemory += info.estimatedMemory;
+      
+      if (info.isLarge) {
+        largeFileCount++;
       }
-
-      const shouldUseStreaming = largeFileCount > 0 || totalEstimatedMemory > this.DEFAULT_MAX_MEMORY;
-      const recommendedBatchSize = Math.max(1, Math.floor(this.DEFAULT_MAX_MEMORY / (totalEstimatedMemory / filePaths.length)));
-
-      if (totalEstimatedMemory > this.DEFAULT_MAX_MEMORY) {
-        warnings.push(`Estimated memory usage (${SharedUtilities.formatBytes(totalEstimatedMemory)}) exceeds recommended limit`);
+      
+      if (info.size > 5 * 1024 * 1024) { // 5MB
+        warnings.push(`Very large file detected: ${filePath} (${SharedUtilities.formatBytes(info.size)})`);
       }
+    }
 
-      resolve({
-        shouldUseStreaming,
-        estimatedMemory: totalEstimatedMemory,
-        recommendedBatchSize: Math.min(recommendedBatchSize, 10), // Cap at 10
-        warningsIssues: warnings,
-      });
-    });
+    const shouldUseStreaming = largeFileCount > 0 || totalEstimatedMemory > this.DEFAULT_MAX_MEMORY;
+    const recommendedBatchSize = Math.max(1, Math.floor(this.DEFAULT_MAX_MEMORY / (totalEstimatedMemory / filePaths.length)));
+
+    if (totalEstimatedMemory > this.DEFAULT_MAX_MEMORY) {
+      warnings.push(`Estimated memory usage (${SharedUtilities.formatBytes(totalEstimatedMemory)}) exceeds recommended limit`);
+    }
+
+    return {
+      shouldUseStreaming,
+      estimatedMemory: totalEstimatedMemory,
+      recommendedBatchSize: Math.min(recommendedBatchSize, 10), // Cap at 10
+      warningsIssues: warnings,
+    };
   }
 } 
