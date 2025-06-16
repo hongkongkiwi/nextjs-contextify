@@ -2,7 +2,7 @@
   "name": "nextjs-llm-context",
   "displayName": "Next.js LLM Context",
   "description": "Generates optimized context files from Next.js codebases for LLM input",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "publisher": "hongkongkiwi",
   "engines": {
     "vscode": "^1.85.0",
