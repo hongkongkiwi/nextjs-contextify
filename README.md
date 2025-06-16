@@ -129,10 +129,12 @@ Comprehensive default ignore patterns for modern Next.js development:
 ### Option 2: Manual Installation
 1. Clone and build from source:
    ```bash
-   git clone https://github.com/sriem/nextjs-contextify
+   git clone https://github.com/hongkongkiwi/nextjs-contextify
    cd nextjs-contextify
-   npm install
-   npm run build
+   pnpm install
+   pnpm run build
+   pnpm run package
+   code --install-extension nextjs-contextify-*.vsix
    ```
 
 ## 📦 Building and Packaging
@@ -140,27 +142,29 @@ Comprehensive default ignore patterns for modern Next.js development:
 ### Creating VSIX Files
 To create a distributable VSIX package:
 
-1. **Install VSCE (Visual Studio Code Extension Manager)**:
+1. **Install Dependencies**:
    ```bash
-   npm install -g @vscode/vsce
+   pnpm install
    ```
 
 2. **Build the Extension**:
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 3. **Create VSIX Package**:
    ```bash
-   vsce package
+   pnpm run package
    ```
    This creates a `nextjs-contextify-X.X.X.vsix` file in the root directory.
 
-4. **Package with Specific Version**:
+4. **Alternative Package Commands**:
    ```bash
-   vsce package --pre-release
-   # or
-   vsce package 2.1.1
+   # Install and package locally for testing
+   pnpm run package:install
+   
+   # Run full CI pipeline (lint, test, package)
+   pnpm run ci
    ```
 
 ### Installing VSIX Files
@@ -187,20 +191,29 @@ For development and testing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/sriem/nextjs-contextify
+git clone https://github.com/hongkongkiwi/nextjs-contextify
 cd nextjs-contextify
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the extension
-npm run build
+pnpm run build
 
 # Package for distribution
-vsce package
+pnpm run package
 
 # Install locally for testing
-code --install-extension nextjs-contextify-*.vsix
+pnpm run package:install
+
+# Run linter
+pnpm run lint
+
+# Run tests
+pnpm run test
+
+# Run full CI pipeline
+pnpm run ci
 ```
 
 ## 📖 Usage
@@ -291,46 +304,301 @@ Generated files include:
 - **Project Structure**: Visual directory tree
 - **Instructions**: Ready-to-paste LLM prompts
 
-## 🔄 Recent Updates (v2.1.1)
+## 🔄 Recent Updates & Changelog
 
-### 🐛 **Critical Bug Fixes**
+### v2.1.1 (2024-06-16) - Critical Bug Fixes
 - **🔧 Parent-Child Selection Fix** - Fixed child directories not being deselected when parent is deselected
 - **📁 Recursive Directory Handling** - Improved recursive selection/deselection of nested directories
 - **🔄 Tree View Synchronization** - Better checkbox state management for directory hierarchies
 - **📊 Enhanced Logging** - Better debugging for directory selection operations
 
-### 🔄 Previous Updates (v2.1.0)
+### v2.1.0 - Previous Updates
 - **🔧 Selection Sync Fix** - Fixed UI not updating when all files are deselected
 - **✅ Empty State Handling** - Proper "no files selected" display when selection is cleared
 - **🔄 Event Propagation** - Improved event handling between Tree View and UI
 
+### Recent Enhancements (Unreleased)
+- **🚀 Automated CI/CD Pipeline** - GitHub workflows for building, testing, and publishing
+- **📦 Enhanced Package Scripts** - Development workflow improvements with pnpm support
+- **🔧 Repository Migration** - Updated from `sriem` to `hongkongkiwi` ownership
+- **📝 Publishing Infrastructure** - Automated publishing to VS Code Marketplace and Open VSX Registry
+- **⚙️ Smart Environment Detection** - Publishes only when required secrets are configured
+- **🛠️ Improved Build Process** - Enhanced ESLint configuration and build reliability
+
+## 🚀 Quick Start for Developers
+
+### Clone and Setup
+```bash
+git clone https://github.com/hongkongkiwi/nextjs-contextify
+cd nextjs-contextify
+pnpm install
+```
+
+### Development Workflow
+```bash
+# Start development (watch mode)
+pnpm run dev
+
+# Lint code
+pnpm run lint
+
+# Build extension
+pnpm run build
+
+# Package for testing
+pnpm run package
+
+# Install locally for testing
+pnpm run package:install
+
+# Run full CI pipeline
+pnpm run ci
+
+# Quick CI (no tests)
+pnpm run ci:fast
+```
+
+### Testing Extension
+1. Run `pnpm run package:install`
+2. Press `F5` in VS Code to launch Extension Development Host
+3. Open a Next.js project in the new window
+4. Click the Next.js Contextify icon in the Activity Bar
+
+### Debugging
+- Use VS Code's built-in debugger with the included `launch.json`
+- Console logs appear in VS Code's Developer Tools
+- Extension logs appear in Output panel → "Extension Host"
+
+## 📁 Project Structure
+
+```
+├── src/extension.ts          # Main extension code (2,673 lines - needs refactoring!)
+├── .github/workflows/        # CI/CD automation
+├── media/                    # Screenshots and images
+├── images/                   # Extension icon
+└── README.md                # Main documentation
+```
+
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22.15.0+ (required)
+- pnpm (latest)
 - VS Code 1.85.0+
 
 ### Setup
 ```bash
-git clone https://github.com/sriem/nextjs-contextify
+git clone https://github.com/hongkongkiwi/nextjs-contextify
 cd nextjs-contextify
-npm install
+pnpm install
 ```
 
-### Build
+### Development Commands
 ```bash
-npm run build
+# Build the extension
+pnpm run build
+
+# Watch mode for development
+pnpm run watch
+
+# Run linter
+pnpm run lint
+
+# Fix linting issues
+pnpm run lint:fix
+
+# Run tests
+pnpm run test
+
+# Package extension
+pnpm run package
+
+# Install packaged extension locally
+pnpm run package:install
+
+# Run full CI pipeline (lint + test + package)
+pnpm run ci
+
+# Run fast CI pipeline (lint + package, skip tests)
+pnpm run ci:fast
 ```
 
-### Watch Mode
+> 🔧 **CI/CD Workflows**: For detailed information about our automated testing, building, and publishing workflows, see [Workflow Documentation](.github/workflows/README.md).
+
+### Release Commands
 ```bash
-npm run watch
+# Patch release (2.1.1 → 2.1.2)
+pnpm run release
+
+# Minor release (2.1.1 → 2.2.0) 
+pnpm run version:minor
+
+# Major release (2.1.1 → 3.0.0)
+pnpm run version:major
+
+# Publish to marketplaces (manual)
+pnpm run publish:vscode      # VS Code Marketplace only
+pnpm run publish:openvsx     # Open VSX Registry only  
+pnpm run publish:all         # Both marketplaces
+
+# Release and publish in one command
+pnpm run release:publish
 ```
 
-### Package
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Getting Started with Development
+
+#### Prerequisites
+- Node.js 22.15.0 or higher
+- pnpm (latest version)
+- VS Code 1.85.0 or higher
+
+#### Development Setup
 ```bash
-npm run vscode:prepublish
+# Clone the repository
+git clone https://github.com/hongkongkiwi/nextjs-contextify
+cd nextjs-contextify
+
+# Install dependencies
+pnpm install
+
+# Start development
+pnpm run dev
 ```
+
+#### Testing Your Changes
+```bash
+# Build the extension
+pnpm run build
+
+# Package for testing
+pnpm run package
+
+# Install locally
+pnpm run package:install
+
+# Run tests
+pnpm run test
+
+# Run linter
+pnpm run lint
+```
+
+### Development Guidelines
+
+#### Code Style
+- Use TypeScript for all new code
+- Follow ESLint configuration
+- Add JSDoc comments for public APIs
+- Use meaningful variable and function names
+
+#### Testing
+- Add unit tests for new services
+- Add integration tests for UI components
+- Ensure all tests pass before submitting PR
+
+#### Commit Messages
+Follow conventional commits:
+```
+feat: add new prompt template for debugging
+fix: resolve file selection memory leak
+docs: update README with new features
+test: add unit tests for FileScanner
+```
+
+### Bug Reports
+
+When reporting bugs, include:
+- VS Code version
+- Extension version
+- Node.js version
+- Steps to reproduce
+- Expected vs actual behavior
+- Error messages or logs
+- Sample project structure (if relevant)
+
+### Feature Requests
+
+For new features:
+- Check existing issues first
+- Describe use case and benefits
+- Consider implementation complexity
+- Provide mockups/examples if applicable
+
+### Priority Areas for Contribution
+
+1. **Code Refactoring**: Help break down the large extension.ts file
+2. **Testing**: Add comprehensive test coverage
+3. **Performance**: Optimize for large codebases
+4. **Documentation**: Improve guides and examples
+5. **UI/UX**: Enhance the webview interface
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests if applicable
+5. Run the full CI pipeline (`pnpm run ci`)
+6. Commit changes (`git commit -m 'feat: add amazing feature'`)
+7. Push to branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+#### PR Requirements
+- [ ] Code builds successfully
+- [ ] Tests pass
+- [ ] Linting passes
+- [ ] Documentation updated
+- [ ] CHANGELOG updated if applicable
+
+### Architecture Goals
+
+When contributing code, keep these principles in mind:
+- **Modularity**: Break down large functions/classes
+- **Testability**: Write code that can be easily tested
+- **Performance**: Consider impact on large codebases
+- **User Experience**: Prioritize intuitive, responsive UI
+- **Maintainability**: Use clear, self-documenting code
+
+### Recognition
+
+Contributors will be:
+- Listed in project acknowledgments
+- Mentioned in release notes
+- Given appropriate credit in documentation
+
+### Getting Help
+
+- Open an issue for questions
+- Join discussions in existing issues
+- Contact maintainers for complex contributions
+
+## 📋 Requirements
+
+- VS Code 1.85.0 or higher
+- Node.js 22.15.0 or higher
+- Next.js project (works with any version, optimized for 13+)
+
+## 🐛 Known Issues
+
+- Very large codebases (10,000+ files) may take longer to process
+- Binary files are automatically skipped to prevent corruption
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 👤 Author
+
+**Andy Savage**
+- GitHub: [@hongkongkiwi](https://github.com/hongkongkiwi)
+- LinkedIn: [andysavage](https://www.linkedin.com/in/andysavage)
+
+**Andy McCormack**
+- GitHub: [@hongkongkiwi](https://github.com/hongkongkiwi)
 
 ## 🎯 Professional Prompt Templates Detail
 
@@ -352,36 +620,6 @@ npm run vscode:prepublish
 - **🔒 Security Audit**: OWASP Top 10 compliance and vulnerability assessment
 - **🧪 Testing Strategy**: Test pyramid approach and quality gates
 - **🔄 Migration Planning**: Technology upgrade roadmaps and risk assessment
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Guidelines
-- Follow TypeScript best practices
-- Maintain comprehensive test coverage
-- Update documentation for new features
-- Ensure compatibility with latest Next.js versions
-
-## 📋 Requirements
-
-- VS Code 1.85.0 or higher
-- Next.js project (works with any version, optimized for 13+)
-
-## 🐛 Known Issues
-
-- Very large codebases (10,000+ files) may take longer to process
-- Binary files are automatically skipped to prevent corruption
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 👤 Author
-
-**Sergej Riemann**
-- GitHub: [@sriem](https://github.com/sriem)
-- Website: [www.sergej-riemann.dev](https://www.sergej-riemann.dev)
 
 ## 🙏 Acknowledgments
 

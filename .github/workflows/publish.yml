@@ -1,0 +1,107 @@
+name: Publish Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      marketplace:
+        description: 'Which marketplace to publish to'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - vscode
+        - openvsx
+        - both
+      version:
+        description: 'Version to publish (leave empty for current)'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run linter
+        run: pnpm run lint
+        
+      - name: Run tests
+        run: pnpm run test
+        
+      - name: Build extension
+        run: pnpm run build
+        
+      - name: Install publishing tools
+        run: |
+          pnpm add -g vsce ovsx
+        
+      - name: Package extension
+        run: pnpm run package
+        
+      - name: Get current version
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Publish to VS Code Marketplace
+        if: (github.event.inputs.marketplace == 'vscode' || github.event.inputs.marketplace == 'both') && env.VSCE_PAT != ''
+        run: vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        
+      - name: Publish to Open VSX Registry
+        if: (github.event.inputs.marketplace == 'openvsx' || github.event.inputs.marketplace == 'both') && env.OPEN_VSX_TOKEN != ''
+        run: ovsx publish nextjs-contextify-*.vsix
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+          
+      - name: Create summary
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        run: |
+          echo "## 🚀 Publication Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Requested Marketplace**: ${{ github.event.inputs.marketplace }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # VS Code Marketplace
+          if [ "${{ github.event.inputs.marketplace }}" == "vscode" ] || [ "${{ github.event.inputs.marketplace }}" == "both" ]; then
+            if [ -n "$VSCE_PAT" ]; then
+              echo "✅ **VS Code Marketplace**: Published successfully" >> $GITHUB_STEP_SUMMARY
+              echo "   - [View Extension](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **VS Code Marketplace**: Failed - VSCE_PAT secret not configured" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Open VSX Registry
+          if [ "${{ github.event.inputs.marketplace }}" == "openvsx" ] || [ "${{ github.event.inputs.marketplace }}" == "both" ]; then
+            if [ -n "$OPEN_VSX_TOKEN" ]; then
+              echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
+              echo "   - [View Extension](https://open-vsx.org/extension/hongkongkiwi/nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Open VSX Registry**: Failed - OPEN_VSX_TOKEN secret not configured" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi 

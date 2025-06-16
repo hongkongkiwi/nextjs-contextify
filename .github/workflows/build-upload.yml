@@ -1,0 +1,84 @@
+name: Build and Upload
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run linter
+        run: pnpm run lint
+        
+      - name: Run tests
+        run: pnpm run test
+        
+      - name: Build extension
+        run: pnpm run build
+        
+      - name: Install vsce
+        run: pnpm add -g vsce
+        
+      - name: Package extension
+        run: pnpm run package
+        
+      - name: Get package version
+        id: package_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        
+      - name: Get commit info
+        id: commit_info
+        run: |
+          echo "SHA=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "MESSAGE=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+        
+      - name: Upload development build
+        uses: actions/upload-artifact@v3
+        with:
+          name: nextjs-contextify-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}
+          path: '*.vsix'
+          retention-days: 30
+          
+      - name: Comment on commit (if from PR)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            
+            const comment = `## 🚀 Development Build Available
+            
+            A development build has been created for commit ${sha.substring(0, 7)}.
+            
+            **Download:** [nextjs-contextify-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}.vsix](https://github.com/${owner}/${repo}/actions/runs/${{ github.run_id }})
+            
+            **Install:** 
+            \`\`\`bash
+            code --install-extension path/to/downloaded/file.vsix
+            \`\`\`
+            
+            **Commit:** ${{ steps.commit_info.outputs.MESSAGE }}`;
+            
+            // This will only work if there's a specific place to post it
+            // For now, we'll just log it
+            console.log(comment); 

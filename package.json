@@ -3,17 +3,16 @@
   "displayName": "Next.js Contextify",
   "description": "Generates optimized context files from Next.js codebases for LLM input",
   "version": "2.1.1",
-  "publisher": "sriem",
+  "publisher": "hongkongkiwi",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=22.15.0"
   },
   "categories": [
     "Other"
   ],
   "icon": "images/icon.jpg",
-  "activationEvents": [
-    "onView:nextjsContextifyExplorer"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -51,24 +50,6 @@
       }
     ],
     "views": {
-      "explorer": [
-        {
-          "id": "nextjsContextifyExplorer",
-          "name": "Next.js Contextify",
-          "when": "workspaceFolderCount > 0"
-        }
-      ]
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "nextjsContextify",
-          "title": "Next.js Contextify",
-          "icon": "$(file-code)"
-        }
-      ]
-    },
-    "views": {
       "nextjsContextify": [
         {
           "id": "nextjsContextifyExplorer",
@@ -79,6 +60,15 @@
           "id": "nextjsContextifySteps",
           "name": "🚀 Generation Steps",
           "when": "workspaceFolderCount > 0"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nextjsContextify",
+          "title": "Next.js Contextify",
+          "icon": "$(file-code)"
         }
       ]
     },
@@ -117,7 +107,12 @@
             "json"
           ],
           "default": "xml",
-          "description": "Default output format"
+          "description": "Default output format for generated context files",
+          "enumDescriptions": [
+            "XML format with structured tags for optimal LLM parsing",
+            "Markdown format with code blocks for human readability",
+            "JSON format with structured data for programmatic use"
+          ]
         },
         "nextjsContextify.defaultLLM": {
           "type": "string",
@@ -125,30 +120,143 @@
             "claude",
             "gpt",
             "gemini",
+            "deepseek",
+            "grok",
             "custom"
           ],
           "default": "claude",
-          "description": "Default target LLM"
+          "description": "Default target LLM for context optimization",
+          "enumDescriptions": [
+            "Claude 3.5/3.7/4 Sonnet (200K-1M tokens)",
+            "GPT-4 Turbo/4.1 (128K-1M tokens)",
+            "Gemini 1.5/2.5 Pro/Nano (32K-2M tokens)",
+            "DeepSeek V3 (64K tokens)",
+            "Grok 2/3 (128K-1M tokens)",
+            "Custom LLM with configurable limits"
+          ]
         },
         "nextjsContextify.includePrompts": {
           "type": "boolean",
           "default": true,
-          "description": "Include ready-to-use prompts by default"
+          "description": "Include ready-to-use prompt templates in generated context"
         },
         "nextjsContextify.autoOpenOutput": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically open generated files"
+          "description": "Automatically open generated context files in VS Code"
+        },
+        "nextjsContextify.maxFileSize": {
+          "type": "number",
+          "default": 1048576,
+          "minimum": 1024,
+          "maximum": 10485760,
+          "description": "Maximum file size to include in context (bytes). Files larger than this will be skipped."
+        },
+        "nextjsContextify.customIgnorePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional glob patterns to ignore when scanning files"
+        },
+        "nextjsContextify.enableCaching": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable file scanning cache for improved performance"
+        },
+        "nextjsContextify.cacheTimeout": {
+          "type": "number",
+          "default": 300000,
+          "minimum": 60000,
+          "maximum": 3600000,
+          "description": "Cache timeout in milliseconds (1 minute to 1 hour)"
+        },
+        "nextjsContextify.showProgressNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show progress notifications during context generation"
+        },
+        "nextjsContextify.includeFileMetadata": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include file metadata (size, tokens, category) in generated context"
+        },
+        "nextjsContextify.sortByPriority": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sort files by priority in generated context (highest priority first)"
+        },
+        "nextjsContextify.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for troubleshooting"
+        },
+        "nextjsContextify.includeTests": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include test files (*.test.*, *.spec.*, __tests__/, cypress/, playwright/) in context generation"
+        },
+        "nextjsContextify.includePrisma": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include Prisma schema and migration files in context generation"
+        },
+        "nextjsContextify.includeEnvFiles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include environment example files (.env.example, .env.local.example) in context generation"
+        },
+        "nextjsContextify.detectProjectStructure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect project structure (T3 Stack, Prisma, tRPC, etc.) for enhanced categorization"
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run build",
-    "build": "npm run clean && tsc -p ./",
+    "vscode:prepublish": "pnpm run build",
+    "build": "pnpm run clean && tsc -p ./",
+    "build:production": "pnpm run clean && pnpm run lint && pnpm run test && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "clean": "rimraf out",
-    "test": "node ./out/test/runTest.js"
+    "test": "pnpm run test:unit && pnpm run test:integration",
+    "test:unit": "mocha out/test/suite/**/*.test.js",
+    "test:integration": "vscode-test",
+    "test:watch": "mocha out/test/suite/**/*.test.js --watch",
+    "test:coverage": "c8 pnpm run test:unit",
+    "package": "vsce package --no-dependencies",
+    "package:install": "pnpm run package && code --install-extension nextjs-contextify-*.vsix",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "lint:ci": "eslint src --ext ts --format json --output-file lint-results.json",
+    "typecheck": "tsc --noEmit",
+    "pretest": "pnpm run build",
+    "ci": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run package",
+    "ci:fast": "pnpm run lint && pnpm run typecheck && pnpm run package",
+    "dev": "pnpm run clean && tsc -watch -p ./",
+    "dev:test": "pnpm run dev & pnpm run test:watch",
+    "analyze:bundle": "pnpm run build && ls -la out/ && du -sh out/*",
+    "analyze:deps": "madge --circular --extensions ts src/",
+    "security:audit": "pnpm audit",
+    "security:check": "pnpm audit --audit-level moderate",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "docs:generate": "typedoc --out docs src/",
+    "version:patch": "npm version patch && git push origin main --tags",
+    "version:minor": "npm version minor && git push origin main --tags",
+    "version:major": "npm version major && git push origin main --tags",
+    "publish:vscode": "vsce publish --no-dependencies",
+    "publish:openvsx": "ovsx publish --no-dependencies nextjs-contextify-*.vsix",
+    "publish:all": "pnpm run publish:vscode && pnpm run publish:openvsx",
+    "release": "pnpm run ci && pnpm run version:patch",
+    "release:minor": "pnpm run ci && pnpm run version:minor",
+    "release:major": "pnpm run ci && pnpm run version:major",
+    "release:publish": "pnpm run ci && pnpm run version:patch && pnpm run publish:all",
+    "setup:dev": "pnpm install && pnpm run build",
+    "validate": "pnpm run lint && pnpm run typecheck && pnpm run format:check",
+    "benchmark": "node scripts/benchmark.js"
   },
   "keywords": [
     "next.js",
@@ -164,25 +272,34 @@
     "app-router",
     "server-components"
   ],
-  "author": "Sergej Riemann",
+  "author": "Andy Savage",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sriem/nextjs-contextify"
+    "url": "https://github.com/hongkongkiwi/nextjs-contextify"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.15.21",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "^22.15.31",
+    "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^2.15.0",
+    "c8": "^10.1.2",
     "eslint": "^9.27.0",
     "glob": "^11.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "madge": "^8.0.0",
     "mocha": "^11.4.0",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.7.3",
-    "vscode-test": "^1.6.1"
+    "ovsx": "^0.9.5",
+    "prettier": "^3.5.3",
+    "rimraf": "^5.0.7",
+    "typedoc": "^0.28.2",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "ignore": "^7.0.4"

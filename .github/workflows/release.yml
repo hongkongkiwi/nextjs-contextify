@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run linter
+        run: pnpm run lint
+        
+      - name: Run tests
+        run: pnpm run test
+        
+      - name: Build extension
+        run: pnpm run build
+        
+      - name: Install publishing tools
+        run: |
+          pnpm add -g vsce ovsx
+        
+      - name: Package extension
+        run: pnpm run package
+        
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## Changes in this Release
+            
+            - Automated release for version ${{ steps.get_version.outputs.VERSION }}
+            - See [CHANGELOG.md](CHANGELOG.md) for detailed changes
+            
+            ## Installation
+            
+            ### Option 1: Install from VS Code Marketplace
+            Search for "Next.js Contextify" in the VS Code Extensions marketplace
+            
+            ### Option 2: Install from VSIX
+            1. Download the `.vsix` file from the assets below
+            2. Install via VS Code: `Extensions: Install from VSIX...`
+            3. Or install via command line: `code --install-extension nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix`
+            
+            ## Requirements
+            - Node.js 22.15.0 or higher
+            - VS Code 1.85.0 or higher
+            
+            ## Quick Start
+            1. Open your Next.js project in VS Code
+            2. Click the Next.js Contextify icon in the Activity Bar
+            3. Follow the 5-step guided process to generate optimized context files
+          draft: false
+          prerelease: false
+          
+      - name: Upload VSIX to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_name: nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_content_type: application/zip
+          
+      - name: Publish to VS Code Marketplace
+        run: vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        if: env.VSCE_PAT != ''
+        
+      - name: Publish to Open VSX Registry
+        run: ovsx publish nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        if: env.OPEN_VSX_TOKEN != ''
+          
+      - name: Publishing Summary
+        run: |
+          echo "## 📦 Publishing Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ secrets.VSCE_PAT }}" != "" ]; then
+            echo "✅ **VS Code Marketplace**: Published successfully" >> $GITHUB_STEP_SUMMARY
+            echo "   - Extension ID: \`hongkongkiwi.nextjs-contextify\`" >> $GITHUB_STEP_SUMMARY
+            echo "   - [View on Marketplace](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  **VS Code Marketplace**: Skipped (VSCE_PAT not configured)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ secrets.OPEN_VSX_TOKEN }}" != "" ]; then
+            echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
+            echo "   - [View on Open VSX](https://open-vsx.org/extension/hongkongkiwi/nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  **Open VSX Registry**: Skipped (OPEN_VSX_TOKEN not configured)" >> $GITHUB_STEP_SUMMARY
+          fi 
