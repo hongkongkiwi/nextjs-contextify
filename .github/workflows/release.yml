@@ -11,16 +11,16 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
-          node-version: '18'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4.1.0
         with:
           version: latest
           
@@ -48,13 +48,9 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
         
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2.3.2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## Changes in this Release
             
@@ -81,16 +77,8 @@ jobs:
             3. Follow the 5-step guided process to generate optimized context files
           draft: false
           prerelease: false
-          
-      - name: Upload VSIX to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
-          asset_name: nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
-          asset_content_type: application/zip
+          files: |
+            nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
           
       - name: Publish to VS Code Marketplace
         run: vsce publish --no-dependencies
