@@ -1,4 +1,4 @@
-# Next.js Contextify - Project Improvements & Recommendations
+# Next.js LLM Context - Project Improvements & Recommendations
 
 ## ✅ **Completed Improvements**
 

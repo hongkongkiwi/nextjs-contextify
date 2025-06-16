@@ -24,7 +24,7 @@ export class ContextGenerator {
 
     await this.saveOutput(output, options);
 
-    if (vscode.workspace.getConfiguration('nextjsContextify').get('autoOpenOutput')) {
+    if (vscode.workspace.getConfiguration('nextjsLlmContext').get('autoOpenOutput')) {
       await this.openOutput(options);
     }
   }
@@ -45,7 +45,7 @@ export class ContextGenerator {
 
     await this.saveOutput(output, options);
 
-    if (vscode.workspace.getConfiguration('nextjsContextify').get('autoOpenOutput')) {
+    if (vscode.workspace.getConfiguration('nextjsLlmContext').get('autoOpenOutput')) {
       await this.openOutput(options);
     }
   }

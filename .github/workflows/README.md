@@ -1,6 +1,6 @@
 # GitHub Workflows Documentation
 
-This directory contains automated workflows for the Next.js Contextify VS Code extension.
+This directory contains automated workflows for the Next.js LLM Context VS Code extension.
 
 ## Workflows
 

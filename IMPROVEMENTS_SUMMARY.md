@@ -1,4 +1,4 @@
-# Next.js Contextify - Code Improvements Summary
+# Next.js LLM Context - Code Improvements Summary
 
 ## 🚀 **Architecture & Code Quality Improvements**
 

@@ -1,4 +1,4 @@
-# Contributing to Next.js Contextify
+# Contributing to Next.js LLM Context
 
 ## 🚀 Getting Started
 
@@ -10,8 +10,8 @@
 ### Development Setup
 ```bash
 # Clone the repository
-git clone https://github.com/hongkongkiwi/nextjs-contextify
-cd nextjs-contextify
+git clone https://github.com/hongkongkiwi/nextjs-llm-context
+cd nextjs-llm-context
 
 # Install dependencies
 pnpm install
@@ -127,4 +127,4 @@ Contributors will be:
 - Join discussions in existing issues
 - Contact maintainers for complex contributions
 
-Thank you for contributing to Next.js Contextify! 🎉 
+Thank you for contributing to Next.js LLM Context! 🎉 

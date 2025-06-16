@@ -55,8 +55,8 @@ jobs:
       - name: Upload development build
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: nextjs-contextify-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}
-          path: 'nextjs-contextify-*.vsix'
+          name: nextjs-llm-context-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}
+          path: 'nextjs-llm-context-*.vsix'
           retention-days: 30
           
       - name: Comment on commit (if from PR)
@@ -71,7 +71,7 @@ jobs:
             
             A development build has been created for commit ${sha.substring(0, 7)}.
             
-            **Download:** [nextjs-contextify-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}.vsix](https://github.com/${owner}/${repo}/actions/runs/${{ github.run_id }})
+            **Download:** [nextjs-llm-context-dev-${{ steps.package_version.outputs.VERSION }}-${{ steps.commit_info.outputs.SHA }}.vsix](https://github.com/${owner}/${repo}/actions/runs/${{ github.run_id }})
             
             **Install:** 
             \`\`\`bash

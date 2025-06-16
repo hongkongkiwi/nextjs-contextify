@@ -72,7 +72,7 @@ jobs:
         
       - name: Publish to Open VSX Registry
         if: (github.event.inputs.marketplace == 'openvsx' || github.event.inputs.marketplace == 'both') && env.OVSX_PAT != ''
-        run: ovsx publish nextjs-contextify-*.vsix
+        run: ovsx publish nextjs-llm-context-*.vsix
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
           
@@ -91,7 +91,7 @@ jobs:
           if [ "${{ github.event.inputs.marketplace }}" == "vscode" ] || [ "${{ github.event.inputs.marketplace }}" == "both" ]; then
             if [ -n "$VSCE_PAT" ]; then
               echo "✅ **VS Code Marketplace**: Published successfully" >> $GITHUB_STEP_SUMMARY
-              echo "   - [View Extension](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+              echo "   - [View Extension](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-llm-context)" >> $GITHUB_STEP_SUMMARY
             else
               echo "❌ **VS Code Marketplace**: Failed - VSCE_PAT secret not configured" >> $GITHUB_STEP_SUMMARY
             fi
@@ -101,7 +101,7 @@ jobs:
           if [ "${{ github.event.inputs.marketplace }}" == "openvsx" ] || [ "${{ github.event.inputs.marketplace }}" == "both" ]; then
             if [ -n "$OVSX_PAT" ]; then
               echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
-              echo "   - [View Extension](https://open-vsx.org/extension/hongkongkiwi/nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+              echo "   - [View Extension](https://open-vsx.org/extension/hongkongkiwi/nextjs-llm-context)" >> $GITHUB_STEP_SUMMARY
             else
               echo "❌ **Open VSX Registry**: Failed - OVSX_PAT secret not configured" >> $GITHUB_STEP_SUMMARY
             fi

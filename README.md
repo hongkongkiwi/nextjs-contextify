@@ -1,10 +1,10 @@
-# Next.js Contextify
+# Next.js LLM Context
 
 A powerful VS Code extension that generates comprehensive context files from your Next.js codebase for optimal use with Large Language Models (LLMs) like ChatGPT, Claude, and others.
 
 **🎯 Now with Professional Step-by-Step UI and 12 Expert Prompt Templates!**
 
-![Next.js Contextify Overview](./media/Screenshot_1.png)
+![Next.js LLM Context Overview](./media/Screenshot_1.png)
 *Initial file selection interface with step-by-step guidance and empty selection state*
 
 ## 🚀 Features
@@ -129,12 +129,12 @@ Comprehensive default ignore patterns for modern Next.js development:
 ### Option 2: Manual Installation
 1. Clone and build from source:
    ```bash
-   git clone https://github.com/hongkongkiwi/nextjs-contextify
-   cd nextjs-contextify
+   git clone https://github.com/hongkongkiwi/nextjs-llm-context
+   cd nextjs-llm-context
    pnpm install
    pnpm run build
    pnpm run package
-   code --install-extension nextjs-contextify-*.vsix
+   code --install-extension nextjs-llm-context-*.vsix
    ```
 
 ## 📦 Building and Packaging
@@ -156,7 +156,7 @@ To create a distributable VSIX package:
    ```bash
    pnpm run package
    ```
-   This creates a `nextjs-contextify-X.X.X.vsix` file in the root directory.
+   This creates a `nextjs-llm-context-X.X.X.vsix` file in the root directory.
 
 4. **Alternative Package Commands**:
    ```bash
@@ -178,7 +178,7 @@ To create a distributable VSIX package:
 
 #### Method 2: Command Line
 ```bash
-code --install-extension nextjs-contextify-2.1.1.vsix
+code --install-extension nextjs-llm-context-2.1.1.vsix
 ```
 
 #### Method 3: Command Palette
@@ -191,8 +191,8 @@ For development and testing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hongkongkiwi/nextjs-contextify
-cd nextjs-contextify
+git clone https://github.com/hongkongkiwi/nextjs-llm-context
+cd nextjs-llm-context
 
 # Install dependencies
 pnpm install
@@ -220,7 +220,7 @@ pnpm run ci
 
 ### Step-by-Step UI (Recommended)
 1. Open your Next.js project in VS Code
-2. Click the **Next.js Contextify** icon in the Activity Bar
+2. Click the **Next.js LLM Context** icon in the Activity Bar
 3. Follow the 5-step guided process:
 
 #### **Step 1: File Selection**
@@ -267,9 +267,9 @@ pnpm run ci
 - View token usage statistics
 
 ### Quick Generation (Command Palette)
-- **Next.js Contextify: Quick Generate** - Fast XML generation with defaults
-- **Next.js Contextify: Generate Context** - Classic step-by-step wizard
-- **Next.js Contextify: Generate with LLM Prompts** - Quick prompt selection
+- **Next.js LLM Context: Quick Generate** - Fast XML generation with defaults
+- **Next.js LLM Context: Generate Context** - Classic step-by-step wizard
+- **Next.js LLM Context: Generate with LLM Prompts** - Quick prompt selection
 
 ### Custom Ignore Patterns
 Create a `.nextjscollectorignore` file in your project root:
@@ -362,7 +362,7 @@ pnpm run ci:fast
 1. Run `pnpm run package:install`
 2. Press `F5` in VS Code to launch Extension Development Host
 3. Open a Next.js project in the new window
-4. Click the Next.js Contextify icon in the Activity Bar
+4. Click the Next.js LLM Context icon in the Activity Bar
 
 ### Debugging
 - Use VS Code's built-in debugger with the included `launch.json`

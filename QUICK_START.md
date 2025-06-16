@@ -4,8 +4,8 @@
 
 ### Clone and Setup
 ```bash
-git clone https://github.com/hongkongkiwi/nextjs-contextify
-cd nextjs-contextify
+git clone https://github.com/hongkongkiwi/nextjs-llm-context
+cd nextjs-llm-context
 pnpm install
 ```
 
@@ -49,7 +49,7 @@ pnpm run version:major
 1. Run `pnpm run package:install`
 2. Press `F5` in VS Code to launch Extension Development Host
 3. Open a Next.js project in the new window
-4. Click the Next.js Contextify icon in the Activity Bar
+4. Click the Next.js LLM Context icon in the Activity Bar
 
 ### Debugging
 - Use VS Code's built-in debugger with the included `launch.json`

@@ -7,18 +7,18 @@ import { OutputFormat, TargetLLM } from './core/types';
 
 
 export function activate(context: vscode.ExtensionContext) {
-  Logger.info('Next.js Contextify extension is now active!');
+  Logger.info('Next.js LLM Context extension is now active!');
 
   // Initialize providers
   const fileTreeProvider = new FileTreeProvider(context);
-  vscode.window.registerTreeDataProvider('nextjsContextifyExplorer', fileTreeProvider);
+  vscode.window.registerTreeDataProvider('nextjsLlmContextExplorer', fileTreeProvider);
 
   // Legacy command implementations for backward compatibility
   const generateCodeBaseContextCommand = vscode.commands.registerCommand(
     'extension.generateCodeBaseContext',
     async () => {
       // Redirect to the universal context generator
-      await vscode.commands.executeCommand('nextjsContextify.generateUniversalContext');
+      await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
     }
   );
 
@@ -120,14 +120,14 @@ export function activate(context: vscode.ExtensionContext) {
     'extension.openContextifyUI',
     async () => {
       // Show the tree view focus
-      await vscode.commands.executeCommand('nextjsContextifyExplorer.focus');
-      vscode.window.showInformationMessage('Next.js Contextify UI is in the sidebar!');
+      await vscode.commands.executeCommand('nextjsLlmContextExplorer.focus');
+      vscode.window.showInformationMessage('Next.js LLM Context UI is in the sidebar!');
     }
   );
 
   // Tree view commands
   const explorerRefreshCommand = vscode.commands.registerCommand(
-    'nextjsContextifyExplorer.refresh',
+    'nextjsLlmContextExplorer.refresh',
     () => {
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File explorer refreshed!');
@@ -135,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const selectAllCommand = vscode.commands.registerCommand(
-    'nextjsContextifyExplorer.selectAll',
+    'nextjsLlmContextExplorer.selectAll',
     () => {
       fileTreeProvider.selectAll();
       vscode.window.showInformationMessage('All files selected!');
@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const deselectAllCommand = vscode.commands.registerCommand(
-    'nextjsContextifyExplorer.deselectAll',
+    'nextjsLlmContextExplorer.deselectAll',
     () => {
       fileTreeProvider.deselectAll();
       vscode.window.showInformationMessage('All files deselected!');
@@ -152,16 +152,16 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Main context generation command (used by tests and UI)
   const generateContextCommand = vscode.commands.registerCommand(
-    'nextjsContextify.generateContext',
+    'nextjsLlmContext.generateContext',
     async () => {
       // Use the existing universal context generator
-      await vscode.commands.executeCommand('nextjsContextify.generateUniversalContext');
+      await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
     }
   );
 
   // Universal context generation commands
   const generateUniversalContextCommand = vscode.commands.registerCommand(
-    'nextjsContextify.generateUniversalContext',
+    'nextjsLlmContext.generateUniversalContext',
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -268,7 +268,7 @@ export function activate(context: vscode.ExtensionContext) {
           }
 
           // Auto-open first file if configured
-          if (vscode.workspace.getConfiguration('nextjsContextify').get('autoOpenOutput') && results.length > 0) {
+          if (vscode.workspace.getConfiguration('nextjsLlmContext').get('autoOpenOutput') && results.length > 0) {
             const firstFile = path.join(workspaceFolder.uri.fsPath, results[0].filename);
             const uri = vscode.Uri.file(firstFile);
             await vscode.window.showTextDocument(uri);
@@ -284,7 +284,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Create ignore file command
   const createIgnoreFileCommand = vscode.commands.registerCommand(
-    'nextjsContextify.createIgnoreFile',
+    'nextjsLlmContext.createIgnoreFile',
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -333,7 +333,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Refresh file tree command
   const refreshCommand = vscode.commands.registerCommand(
-    'nextjsContextify.refresh',
+    'nextjsLlmContext.refresh',
     () => {
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File tree refreshed!');
@@ -360,7 +360,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register configuration change listener
   vscode.workspace.onDidChangeConfiguration(event => {
-    if (event.affectsConfiguration('nextjsContextify')) {
+    if (event.affectsConfiguration('nextjsLlmContext')) {
       Logger.info('Configuration changed, refreshing providers...');
       fileTreeProvider.refresh();
     }
@@ -370,5 +370,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  Logger.info('Next.js Contextify extension deactivated');
+  Logger.info('Next.js LLM Context extension deactivated');
 } 

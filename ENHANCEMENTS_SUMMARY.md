@@ -1,7 +1,7 @@
-# Next.js Contextify Extension - Major Enhancements Summary
+# Next.js LLM Context Extension - Major Enhancements Summary
 
 ## 🚀 **Overview**
-The Next.js Contextify extension has been significantly enhanced with comprehensive support for modern Next.js project structures, additional LLMs, expanded UI frameworks, improved router detection, and much more.
+The Next.js LLM Context extension has been significantly enhanced with comprehensive support for modern Next.js project structures, additional LLMs, expanded UI frameworks, improved router detection, and much more.
 
 ## 🔧 **Enhanced Features**
 
@@ -215,7 +215,7 @@ When you run the extension on a modern Next.js project, it will now:
 
 ## 🎉 **Result**
 
-The Next.js Contextify extension now provides **enterprise-grade** project structure detection with support for:
+The Next.js LLM Context extension now provides **enterprise-grade** project structure detection with support for:
 - **8 Authentication Libraries**
 - **20+ UI Frameworks** 
 - **6 State Management Solutions**

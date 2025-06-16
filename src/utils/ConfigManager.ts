@@ -21,7 +21,7 @@ export interface ExtensionConfig {
 }
 
 export class ConfigManager {
-  private static readonly CONFIG_SECTION = 'nextjsContextify';
+  private static readonly CONFIG_SECTION = 'nextjsLlmContext';
   private config: vscode.WorkspaceConfiguration;
 
   constructor() {

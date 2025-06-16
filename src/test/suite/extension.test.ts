@@ -8,7 +8,7 @@ suite('Extension Test Suite', () => {
 
   test('Extension should be present', () => {
     if (vscode.extensions && typeof vscode.extensions.getExtension === 'function') {
-      const extension = vscode.extensions.getExtension('hongkongkiwi.nextjs-contextify');
+      const extension = vscode.extensions.getExtension('hongkongkiwi.nextjs-llm-context');
       assert.ok(extension, 'Extension should be found');
     } else {
       // Fallback for test environments where extensions API isn't fully available
@@ -18,7 +18,7 @@ suite('Extension Test Suite', () => {
 
   test('Extension should activate', async () => {
     if (vscode.extensions && typeof vscode.extensions.getExtension === 'function') {
-      const extension = vscode.extensions.getExtension('hongkongkiwi.nextjs-contextify');
+      const extension = vscode.extensions.getExtension('hongkongkiwi.nextjs-llm-context');
       if (extension) {
         await extension.activate();
         assert.strictEqual(extension.isActive, true);
@@ -40,13 +40,13 @@ suite('Extension Test Suite', () => {
           'extension.generateQuickContext',
           'extension.generateWithPrompts',
           'extension.openContextifyUI',
-          'nextjsContextifyExplorer.refresh',
-          'nextjsContextifyExplorer.selectAll',
-          'nextjsContextifyExplorer.deselectAll',
-          'nextjsContextify.generateContext',
-          'nextjsContextify.generateUniversalContext',
-          'nextjsContextify.createIgnoreFile',
-          'nextjsContextify.refresh'
+          'nextjsLlmContextExplorer.refresh',
+          'nextjsLlmContextExplorer.selectAll',
+          'nextjsLlmContextExplorer.deselectAll',
+          'nextjsLlmContext.generateContext',
+          'nextjsLlmContext.generateUniversalContext',
+          'nextjsLlmContext.createIgnoreFile',
+          'nextjsLlmContext.refresh'
         ];
 
         expectedCommands.forEach(command => {
@@ -64,7 +64,7 @@ suite('Extension Test Suite', () => {
   suite('Configuration', () => {
     test('Default configuration should be correct', () => {
       if (vscode.workspace && typeof vscode.workspace.getConfiguration === 'function') {
-        const config = vscode.workspace.getConfiguration('nextjsContextify');
+        const config = vscode.workspace.getConfiguration('nextjsLlmContext');
         
         // Check with fallback values since config might not be fully loaded in test
         assert.strictEqual(config.get('defaultFormat', 'xml'), 'xml');
@@ -79,7 +79,7 @@ suite('Extension Test Suite', () => {
 
     test('Configuration values should be valid', () => {
       if (vscode.workspace && typeof vscode.workspace.getConfiguration === 'function') {
-        const config = vscode.workspace.getConfiguration('nextjsContextify');
+        const config = vscode.workspace.getConfiguration('nextjsLlmContext');
         
         const validFormats = ['xml', 'markdown', 'json'];
         const validLLMs = ['claude', 'gpt', 'gemini', 'deepseek', 'grok', 'custom'];
@@ -101,7 +101,7 @@ suite('Extension Test Suite', () => {
       try {
         if (vscode.commands && typeof vscode.commands.executeCommand === 'function') {
           // Use a promise race with timeout to avoid hanging in headless mode
-          const commandPromise = vscode.commands.executeCommand('nextjsContextify.generateContext');
+          const commandPromise = vscode.commands.executeCommand('nextjsLlmContext.generateContext');
           const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Command timed out (likely due to UI prompts in headless mode)')), 5000)
           );

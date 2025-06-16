@@ -243,7 +243,7 @@ The optimization features are built into the Universal Context Generator:
 4. **Metrics**: Real-time feedback on token savings
 
 Use the VS Code command palette:
-- `Next.js Contextify: Generate Universal AI Context` 
+- `Next.js LLM Context: Generate Universal AI Context` 
 - Select your optimization level
 - Get optimized context files for each AI assistant
 

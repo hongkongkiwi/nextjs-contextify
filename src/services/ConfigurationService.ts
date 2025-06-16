@@ -16,7 +16,7 @@ export class ConfigurationService {
   private config: vscode.WorkspaceConfiguration;
 
   private constructor() {
-    this.config = vscode.workspace.getConfiguration('nextjsContextify');
+    this.config = vscode.workspace.getConfiguration('nextjsLlmContext');
   }
 
   public static getInstance(): ConfigurationService {
@@ -27,7 +27,7 @@ export class ConfigurationService {
   }
 
   public refresh(): void {
-    this.config = vscode.workspace.getConfiguration('nextjsContextify');
+    this.config = vscode.workspace.getConfiguration('nextjsLlmContext');
   }
 
   public getConfig(): ExtensionConfig {

@@ -3,7 +3,7 @@
 # Test GitHub Actions workflow locally using act
 set -e
 
-echo "🔧 Testing Next.js Contextify workflow with act..."
+echo "🔧 Testing Next.js LLM Context workflow with act..."
 
 # Function to run a specific job
 run_job() {

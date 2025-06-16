@@ -61,12 +61,12 @@ jobs:
             ## Installation
             
             ### Option 1: Install from VS Code Marketplace
-            Search for "Next.js Contextify" in the VS Code Extensions marketplace
+            Search for "Next.js LLM Context" in the VS Code Extensions marketplace
             
             ### Option 2: Install from VSIX
             1. Download the `.vsix` file from the assets below
             2. Install via VS Code: `Extensions: Install from VSIX...`
-            3. Or install via command line: `code --install-extension nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix`
+            3. Or install via command line: `code --install-extension nextjs-llm-context-${{ steps.get_version.outputs.VERSION }}.vsix`
             
             ## Requirements
             - Node.js 22.15.0 or higher
@@ -74,12 +74,12 @@ jobs:
             
             ## Quick Start
             1. Open your Next.js project in VS Code
-            2. Click the Next.js Contextify icon in the Activity Bar
+            2. Click the Next.js LLM Context icon in the Activity Bar
             3. Follow the 5-step guided process to generate optimized context files
           draft: false
           prerelease: false
           files: |
-            nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
+            nextjs-llm-context-${{ steps.get_version.outputs.VERSION }}.vsix
           
       - name: Publish to VS Code Marketplace
         run: vsce publish --no-dependencies
@@ -88,7 +88,7 @@ jobs:
         if: env.VSCE_PAT != ''
         
       - name: Publish to Open VSX Registry
-        run: ovsx publish nextjs-contextify-${{ steps.get_version.outputs.VERSION }}.vsix
+        run: ovsx publish nextjs-llm-context-${{ steps.get_version.outputs.VERSION }}.vsix
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
         if: env.OPEN_VSX_TOKEN != ''
@@ -99,15 +99,15 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ secrets.VSCE_PAT }}" != "" ]; then
             echo "✅ **VS Code Marketplace**: Published successfully" >> $GITHUB_STEP_SUMMARY
-            echo "   - Extension ID: \`hongkongkiwi.nextjs-contextify\`" >> $GITHUB_STEP_SUMMARY
-            echo "   - [View on Marketplace](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+            echo "   - Extension ID: \`hongkongkiwi.nextjs-llm-context\`" >> $GITHUB_STEP_SUMMARY
+            echo "   - [View on Marketplace](https://marketplace.visualstudio.com/items?itemName=hongkongkiwi.nextjs-llm-context)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️  **VS Code Marketplace**: Skipped (VSCE_PAT not configured)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ secrets.OPEN_VSX_TOKEN }}" != "" ]; then
             echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
-            echo "   - [View on Open VSX](https://open-vsx.org/extension/hongkongkiwi/nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
+            echo "   - [View on Open VSX](https://open-vsx.org/extension/hongkongkiwi/nextjs-llm-context)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️  **Open VSX Registry**: Skipped (OPEN_VSX_TOKEN not configured)" >> $GITHUB_STEP_SUMMARY
           fi 

@@ -1,6 +1,6 @@
-# Testing Guide for Next.js Contextify Extension
+# Testing Guide for Next.js LLM Context Extension
 
-This document describes the comprehensive testing setup for the Next.js Contextify VS Code extension using the [Microsoft vscode-test utility](https://github.com/microsoft/vscode-test).
+This document describes the comprehensive testing setup for the Next.js LLM Context VS Code extension using the [Microsoft vscode-test utility](https://github.com/microsoft/vscode-test).
 
 ## Testing Architecture
 
@@ -188,10 +188,10 @@ suite('New Feature Tests', () => {
 suite('Extension Integration Tests', () => {
   test('Should execute command successfully', async () => {
     // Test extension command execution
-    await vscode.commands.executeCommand('nextjsContextify.newCommand');
+    await vscode.commands.executeCommand('nextjsLlmContext.newCommand');
     
     // Verify results
-    const config = vscode.workspace.getConfiguration('nextjsContextify');
+    const config = vscode.workspace.getConfiguration('nextjsLlmContext');
     assert.ok(config);
   });
 });

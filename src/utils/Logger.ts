@@ -12,7 +12,7 @@ export class Logger {
   private static logLevel: LogLevel = LogLevel.INFO;
 
   static initialize(context: vscode.ExtensionContext): void {
-    this.outputChannel = vscode.window.createOutputChannel('Next.js Contextify');
+    this.outputChannel = vscode.window.createOutputChannel('Next.js LLM Context');
     context.subscriptions.push(this.outputChannel);
 
     // Set log level based on environment
@@ -37,7 +37,7 @@ export class Logger {
 
     // Show error notification for critical errors
     if (error) {
-      vscode.window.showErrorMessage(`Next.js Contextify: ${message}`);
+      vscode.window.showErrorMessage(`Next.js LLM Context: ${message}`);
     }
   }
 
@@ -108,7 +108,7 @@ export class ErrorHandler {
     Logger.error(`Error in ${context}`, error);
 
     const choice = await vscode.window.showErrorMessage(
-      `Next.js Contextify encountered an error: ${error.message}`,
+      `Next.js LLM Context encountered an error: ${error.message}`,
       'Show Details',
       'Report Issue'
     );
@@ -118,7 +118,7 @@ export class ErrorHandler {
         Logger.show();
         break;
       case 'Report Issue': {
-        const issueUrl = 'https://github.com/hongkongkiwi/nextjs-contextify/issues/new';
+        const issueUrl = 'https://github.com/hongkongkiwi/nextjs-llm-context/issues/new';
         vscode.env.openExternal(vscode.Uri.parse(issueUrl));
         break;
       }

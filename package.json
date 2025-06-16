@@ -1,8 +1,8 @@
 {
-  "name": "nextjs-contextify",
-  "displayName": "Next.js Contextify",
+  "name": "nextjs-llm-context",
+  "displayName": "Next.js LLM Context",
   "description": "Generates optimized context files from Next.js codebases for LLM input",
-  "version": "2.1.1",
+  "version": "2.5.0",
   "publisher": "hongkongkiwi",
   "engines": {
     "vscode": "^1.85.0",
@@ -19,66 +19,66 @@
     "commands": [
       {
         "command": "extension.generateCodeBaseContext",
-        "title": "Next.js Contextify: Generate Context"
+        "title": "Next.js LLM Context: Generate Context"
       },
       {
         "command": "extension.generateQuickContext",
-        "title": "Next.js Contextify: Quick Generate (XML)"
+        "title": "Next.js LLM Context: Quick Generate (XML)"
       },
       {
         "command": "extension.generateWithPrompts",
-        "title": "Next.js Contextify: Generate with LLM Prompts"
+        "title": "Next.js LLM Context: Generate with LLM Prompts"
       },
       {
         "command": "extension.openContextifyUI",
-        "title": "Next.js Contextify: Open UI",
+        "title": "Next.js LLM Context: Open UI",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "nextjsContextifyExplorer.refresh",
+        "command": "nextjsLlmContextExplorer.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "nextjsContextifyExplorer.selectAll",
+        "command": "nextjsLlmContextExplorer.selectAll",
         "title": "Select All",
         "icon": "$(check-all)"
       },
       {
-        "command": "nextjsContextifyExplorer.deselectAll",
+        "command": "nextjsLlmContextExplorer.deselectAll",
         "title": "Deselect All",
         "icon": "$(close-all)"
       },
       {
-        "command": "nextjsContextify.generateContext",
+        "command": "nextjsLlmContext.generateContext",
         "title": "📄 Generate Context",
-        "category": "Next.js Contextify"
+        "category": "Next.js LLM Context"
       },
       {
-        "command": "nextjsContextify.generateUniversalContext",
+        "command": "nextjsLlmContext.generateUniversalContext",
         "title": "🤖 Generate Universal AI Context",
-        "category": "Next.js Contextify"
+        "category": "Next.js LLM Context"
       },
       {
-        "command": "nextjsContextify.createIgnoreFile",
+        "command": "nextjsLlmContext.createIgnoreFile",
         "title": "🚫 Create AI Ignore File",
-        "category": "Next.js Contextify"
+        "category": "Next.js LLM Context"
       },
       {
-        "command": "nextjsContextify.refresh",
+        "command": "nextjsLlmContext.refresh",
         "title": "🔄 Refresh",
-        "category": "Next.js Contextify"
+        "category": "Next.js LLM Context"
       }
     ],
     "views": {
-      "nextjsContextify": [
+      "nextjsLlmContext": [
         {
-          "id": "nextjsContextifyExplorer",
+          "id": "nextjsLlmContextExplorer",
           "name": "📁 File Selection",
           "when": "workspaceFolderCount > 0"
         },
         {
-          "id": "nextjsContextifySteps",
+          "id": "nextjsLlmContextSteps",
           "name": "🚀 Generation Steps",
           "when": "workspaceFolderCount > 0"
         }
@@ -87,8 +87,8 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "nextjsContextify",
-          "title": "Next.js Contextify",
+          "id": "nextjsLlmContext",
+          "title": "Next.js LLM Context",
           "icon": "$(file-code)"
         }
       ]
@@ -97,30 +97,30 @@
       "view/title": [
         {
           "command": "extension.openContextifyUI",
-          "when": "view == nextjsContextifyExplorer",
+          "when": "view == nextjsLlmContextExplorer",
           "group": "navigation@1"
         },
         {
-          "command": "nextjsContextifyExplorer.refresh",
-          "when": "view == nextjsContextifyExplorer",
+          "command": "nextjsLlmContextExplorer.refresh",
+          "when": "view == nextjsLlmContextExplorer",
           "group": "navigation@2"
         },
         {
-          "command": "nextjsContextifyExplorer.selectAll",
-          "when": "view == nextjsContextifyExplorer",
+          "command": "nextjsLlmContextExplorer.selectAll",
+          "when": "view == nextjsLlmContextExplorer",
           "group": "navigation@3"
         },
         {
-          "command": "nextjsContextifyExplorer.deselectAll",
-          "when": "view == nextjsContextifyExplorer",
+          "command": "nextjsLlmContextExplorer.deselectAll",
+          "when": "view == nextjsLlmContextExplorer",
           "group": "navigation@4"
         }
       ]
     },
     "configuration": {
-      "title": "Next.js Contextify",
+      "title": "Next.js LLM Context",
       "properties": {
-        "nextjsContextify.defaultFormat": {
+        "nextjsLlmContext.defaultFormat": {
           "type": "string",
           "enum": [
             "xml",
@@ -135,7 +135,7 @@
             "JSON format with structured data for programmatic use"
           ]
         },
-        "nextjsContextify.defaultLLM": {
+        "nextjsLlmContext.defaultLLM": {
           "type": "string",
           "enum": [
             "claude",
@@ -156,24 +156,24 @@
             "Custom LLM with configurable limits"
           ]
         },
-        "nextjsContextify.includePrompts": {
+        "nextjsLlmContext.includePrompts": {
           "type": "boolean",
           "default": true,
           "description": "Include ready-to-use prompt templates in generated context"
         },
-        "nextjsContextify.autoOpenOutput": {
+        "nextjsLlmContext.autoOpenOutput": {
           "type": "boolean",
           "default": true,
           "description": "Automatically open generated context files in VS Code"
         },
-        "nextjsContextify.maxFileSize": {
+        "nextjsLlmContext.maxFileSize": {
           "type": "number",
           "default": 1048576,
           "minimum": 1024,
           "maximum": 10485760,
           "description": "Maximum file size to include in context (bytes). Files larger than this will be skipped."
         },
-        "nextjsContextify.customIgnorePatterns": {
+        "nextjsLlmContext.customIgnorePatterns": {
           "type": "array",
           "items": {
             "type": "string"
@@ -181,54 +181,54 @@
           "default": [],
           "description": "Additional glob patterns to ignore when scanning files"
         },
-        "nextjsContextify.enableCaching": {
+        "nextjsLlmContext.enableCaching": {
           "type": "boolean",
           "default": true,
           "description": "Enable file scanning cache for improved performance"
         },
-        "nextjsContextify.cacheTimeout": {
+        "nextjsLlmContext.cacheTimeout": {
           "type": "number",
           "default": 300000,
           "minimum": 60000,
           "maximum": 3600000,
           "description": "Cache timeout in milliseconds (1 minute to 1 hour)"
         },
-        "nextjsContextify.showProgressNotifications": {
+        "nextjsLlmContext.showProgressNotifications": {
           "type": "boolean",
           "default": true,
           "description": "Show progress notifications during context generation"
         },
-        "nextjsContextify.includeFileMetadata": {
+        "nextjsLlmContext.includeFileMetadata": {
           "type": "boolean",
           "default": true,
           "description": "Include file metadata (size, tokens, category) in generated context"
         },
-        "nextjsContextify.sortByPriority": {
+        "nextjsLlmContext.sortByPriority": {
           "type": "boolean",
           "default": true,
           "description": "Sort files by priority in generated context (highest priority first)"
         },
-        "nextjsContextify.debugMode": {
+        "nextjsLlmContext.debugMode": {
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging for troubleshooting"
         },
-        "nextjsContextify.includeTests": {
+        "nextjsLlmContext.includeTests": {
           "type": "boolean",
           "default": false,
           "description": "Include test files (*.test.*, *.spec.*, __tests__/, cypress/, playwright/) in context generation"
         },
-        "nextjsContextify.includePrisma": {
+        "nextjsLlmContext.includePrisma": {
           "type": "boolean",
           "default": true,
           "description": "Include Prisma schema and migration files in context generation"
         },
-        "nextjsContextify.includeEnvFiles": {
+        "nextjsLlmContext.includeEnvFiles": {
           "type": "boolean",
           "default": false,
           "description": "Include environment example files (.env.example, .env.local.example) in context generation"
         },
-        "nextjsContextify.detectProjectStructure": {
+        "nextjsLlmContext.detectProjectStructure": {
           "type": "boolean",
           "default": true,
           "description": "Automatically detect project structure (T3 Stack, Prisma, tRPC, etc.) for enhanced categorization"
@@ -253,7 +253,7 @@
     "test:all": "pnpm run pretest && pnpm run test:unit && pnpm run test:integration",
     "test:ci": "pnpm run pretest && pnpm run test:integration",
     "package": "vsce package --no-dependencies",
-    "package:install": "pnpm run package && code --install-extension nextjs-contextify-*.vsix",
+    "package:install": "pnpm run package && code --install-extension nextjs-llm-context-*.vsix",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
     "lint:ci": "eslint src --ext ts --format json --output-file lint-results.json",
@@ -274,7 +274,7 @@
     "version:minor": "npm version minor && git push origin main --tags",
     "version:major": "npm version major && git push origin main --tags",
     "publish:vscode": "vsce publish --no-dependencies",
-    "publish:openvsx": "ovsx publish --no-dependencies nextjs-contextify-*.vsix",
+    "publish:openvsx": "ovsx publish --no-dependencies nextjs-llm-context-*.vsix",
     "publish:all": "pnpm run publish:vscode && pnpm run publish:openvsx",
     "release": "pnpm run ci && pnpm run version:patch",
     "release:minor": "pnpm run ci && pnpm run version:minor",
@@ -302,7 +302,7 @@
   },
   "keywords": [
     "next.js",
-    "contextify",
+    "llm-context",
     "codebase",
     "context",
     "llm",
@@ -318,7 +318,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hongkongkiwi/nextjs-contextify"
+    "url": "https://github.com/hongkongkiwi/nextjs-llm-context"
   },
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {

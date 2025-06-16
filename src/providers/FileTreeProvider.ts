@@ -32,7 +32,7 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileTreeItem> {
   }
 
   private getStorageKey(): string {
-    return `nextjsContextify.selectedFiles.${this.rootPath}`;
+    return `nextjsLlmContext.selectedFiles.${this.rootPath}`;
   }
 
   private loadPersistedSelection(): void {

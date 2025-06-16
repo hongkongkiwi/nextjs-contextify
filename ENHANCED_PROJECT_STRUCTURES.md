@@ -75,7 +75,7 @@ The extension automatically detects your package manager based on lock files:
 ### Configuration Override
 ```json
 {
-  "nextjsContextify.packageManagerOverride": "pnpm"
+  "nextjsLlmContext.packageManagerOverride": "pnpm"
 }
 ```
 
@@ -267,9 +267,9 @@ The extension automatically detects your package manager based on lock files:
 ### Configuration
 ```json
 {
-  "nextjsContextify.monorepo.enabled": true,
-  "nextjsContextify.monorepo.detectAutomatically": true,
-  "nextjsContextify.monorepo.includedWorkspaces": ["apps/web", "packages/ui"]
+  "nextjsLlmContext.monorepo.enabled": true,
+  "nextjsLlmContext.monorepo.detectAutomatically": true,
+  "nextjsLlmContext.monorepo.includedWorkspaces": ["apps/web", "packages/ui"]
 }
 ```
 
@@ -326,7 +326,7 @@ The extension automatically detects your package manager based on lock files:
 ### ZenStack Schemas
 ```json
 {
-  "nextjsContextify.customDatabaseSchemaPaths": [
+  "nextjsLlmContext.customDatabaseSchemaPaths": [
     "custom/schema.zmodel",
     "db/models.zmodel"
   ]
@@ -336,7 +336,7 @@ The extension automatically detects your package manager based on lock files:
 ### Configuration Overrides
 ```json
 {
-  "nextjsContextify.customConfigPaths": {
+  "nextjsLlmContext.customConfigPaths": {
     "tailwind": "config/tailwind.config.js",
     "prisma": "database/schema.prisma",
     "zenstack": "models/schema.zmodel"
@@ -354,10 +354,10 @@ The extension automatically detects your package manager based on lock files:
 ### Configuration
 ```json
 {
-  "nextjsContextify.performance.enableParallelScanning": true,
-  "nextjsContextify.performance.maxFilesPerScan": 10000,
-  "nextjsContextify.performance.cacheResults": true,
-  "nextjsContextify.performance.cacheTTL": 300000
+  "nextjsLlmContext.performance.enableParallelScanning": true,
+  "nextjsLlmContext.performance.maxFilesPerScan": 10000,
+  "nextjsLlmContext.performance.cacheResults": true,
+  "nextjsLlmContext.performance.cacheTTL": 300000
 }
 ```
 
@@ -379,8 +379,8 @@ The extension automatically detects your package manager based on lock files:
 ### Debug Mode
 ```json
 {
-  "nextjsContextify.advanced.debugMode": true,
-  "nextjsContextify.advanced.verboseLogging": true
+  "nextjsLlmContext.advanced.debugMode": true,
+  "nextjsLlmContext.advanced.verboseLogging": true
 }
 ```
 

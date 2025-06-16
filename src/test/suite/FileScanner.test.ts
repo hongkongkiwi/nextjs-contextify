@@ -11,7 +11,7 @@ suite('FileScanner Test Suite', () => {
 
   suiteSetup(async () => {
     // Create a temporary directory for testing
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nextjs-contextify-test-'));
+    		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nextjs-llm-context-test-'));
     scanner = new FileScanner(tempDir);
 
     // Create test file structure
