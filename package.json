@@ -6,7 +6,8 @@
   "publisher": "hongkongkiwi",
   "engines": {
     "vscode": "^1.85.0",
-    "node": ">=22.15.0"
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
   },
   "categories": [
     "Other"
@@ -288,7 +289,8 @@
     "workflow:all": "./scripts/test-workflow.sh all",
     "workflow:list": "act --list",
     "workflow:dry-run": "act --dryrun",
-    "workflow:test-direct": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:unit && pnpm run analyze:deps && pnpm run docs:generate && pnpm run security:check"
+    "workflow:test-direct": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:unit && pnpm run analyze:deps && pnpm run docs:generate && pnpm run security:check",
+    "verify:versions": "./scripts/verify-versions.sh"
   },
   "keywords": [
     "next.js",
@@ -310,6 +312,7 @@
     "type": "git",
     "url": "https://github.com/hongkongkiwi/nextjs-contextify"
   },
+  "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",

@@ -5,6 +5,9 @@ This guide covers testing GitHub Actions workflows locally using `act` and direc
 ## Quick Start
 
 ```bash
+# Verify version configuration
+pnpm run verify:versions
+
 # Test all workflow scripts directly
 pnpm run workflow:test-direct
 
@@ -14,6 +17,38 @@ pnpm run workflow:quality
 # List all available workflows
 pnpm run workflow:list
 ```
+
+## Version Management
+
+Our workflows automatically read Node.js and pnpm versions from project configuration instead of using hardcoded versions:
+
+### Configuration Files
+
+- **`.nvmrc`**: Specifies the Node.js version (22.15.0)
+- **`package.json`**: 
+  - `engines.node`: Minimum Node.js version (>=18.0.0)
+  - `engines.pnpm`: Minimum pnpm version (>=9.0.0)  
+  - `packageManager`: Exact pnpm version (pnpm@10.12.1)
+
+### Workflow Configuration
+
+Workflows use:
+- `node-version-file: '.nvmrc'` to read Node.js version from .nvmrc
+- `pnpm/action-setup@v4.1.0` without version to read from `packageManager` field
+
+### Version Verification
+
+```bash
+# Check version consistency across project
+pnpm run verify:versions
+```
+
+This script verifies:
+- ✅ .nvmrc matches current Node.js version
+- ✅ package.json has proper engines and packageManager fields
+- ✅ Workflows use node-version-file instead of hardcoded versions
+- ✅ Workflows read pnpm version from packageManager field
+- ✅ Matrix strategies are properly configured for multi-version testing
 
 ## Testing Methods
 
@@ -149,6 +184,9 @@ Runs on pull requests:
 ### Available Scripts
 
 ```bash
+# Version verification
+pnpm run verify:versions    # Check version consistency
+
 # Direct workflow testing
 pnpm run workflow:test-direct
 

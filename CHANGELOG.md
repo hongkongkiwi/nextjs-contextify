@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Publishing scripts: `publish:vscode`, `publish:openvsx`, `publish:all`, `release:publish`
 - Manual publishing workflow with marketplace selection options
 - Smart environment variable detection (publishes only when secrets are configured)
+- **Workflows now read Node.js and pnpm versions from project configuration**
+  - Added `.nvmrc` file specifying Node.js 22.15.0
+  - Updated `package.json` with `engines` and `packageManager` fields
+  - Modified all GitHub Actions workflows to use `node-version-file: '.nvmrc'`
+  - Updated pnpm setup to read version from `packageManager` field instead of hardcoding
+  - Added `verify:versions` script to check version consistency across project
+  - Enhanced WORKFLOW_TESTING.md with version management section
 
 ### Changed
 - **Repository ownership**: Updated from `sriem` to `hongkongkiwi`
@@ -30,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Package manager consistency issues in build scripts
 - All repository URLs and references updated
 - ESLint configuration compatibility with v9.x
+- Version verification script (`scripts/verify-versions.sh`)
+- `pnpm run verify:versions` command to check configuration consistency
 
 ## [2.1.1] - 2024-06-16
 
