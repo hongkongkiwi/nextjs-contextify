@@ -3,7 +3,6 @@ import * as path from 'path';
 import { createReadStream } from 'fs';
 import { FileInfo } from '../../core/types';
 import { Logger } from '../../utils/Logger';
-import { SecurityService } from '../../utils/SecurityService';
 
 export interface ProcessingOptions {
   maxFileSize?: number;
@@ -38,12 +37,14 @@ export class FileContentProcessor {
     const startMemory = process.memoryUsage().heapUsed;
 
     try {
-      // Security validation
-      await SecurityService.validateFileAccess(filePath);
+      // Basic security validation
+      if (!filePath || path.isAbsolute(filePath) && !filePath.startsWith(process.cwd())) {
+        throw new Error(`File path ${filePath} is outside of workspace`);
+      }
 
       const stats = await fs.promises.stat(filePath);
-      if (!SecurityService.isFileSafe(stats)) {
-        throw new Error(`File ${filePath} failed security validation`);
+      if (!stats.isFile()) {
+        throw new Error(`Path ${filePath} is not a regular file`);
       }
 
       const maxSize = options.maxFileSize || this.DEFAULT_MAX_FILE_SIZE;

@@ -115,50 +115,77 @@ export class EnhancedErrorHandler {
 
   static async handleError(
     error: Error,
-    context: ErrorContext,
-    options: ErrorHandlingOptions = {}
+    context: {
+      severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      operation: string;
+      context?: any;
+      recovery?: () => Promise<any>;
+      showToUser?: boolean;
+    }
   ): Promise<any> {
-    const severity = this.determineSeverity(error, context);
-    const report: ErrorReport = {
-      error,
-      context,
-      severity,
-      isRecoverable: false,
-      recoveryAttempted: false,
-      technicalDetails: this.formatTechnicalDetails(error, context),
-    };
-
-    // Log the error
-    this.logError(report, options);
-
-    // Add to history
-    this.addToHistory(report);
-
-    // Attempt recovery if enabled
-    if (options.enableRecovery !== false) {
-      const recoveryResult = await this.attemptRecovery(error, context, report);
-      if (recoveryResult !== null) {
-        report.recoveryAttempted = true;
-        report.recoverySuccessful = true;
-        Logger.info(`Successfully recovered from error: ${error.message}`);
-        return recoveryResult;
-      } else {
-        report.recoveryAttempted = true;
-        report.recoverySuccessful = false;
+    try {
+      // Log the error with context
+      const errorMessage = `${context.operation} failed: ${error.message}`;
+      
+      switch (context.severity) {
+        case 'LOW':
+          Logger.info(errorMessage, error);
+          break;
+        case 'MEDIUM':
+          Logger.warn(errorMessage, error);
+          break;
+        case 'HIGH':
+        case 'CRITICAL':
+          Logger.error(errorMessage, error);
+          break;
       }
-    }
 
-    // Show user message if appropriate
-    if (options.showUserMessages !== false) {
-      this.showUserMessage(report);
-    }
+      // Show error to user if requested
+      if (context.showToUser) {
+        const userMessage = `${context.operation.replace(/-/g, ' ')} failed: ${error.message}`;
+        
+        switch (context.severity) {
+          case 'LOW':
+          case 'MEDIUM':
+            vscode.window.showWarningMessage(userMessage);
+            break;
+          case 'HIGH':
+          case 'CRITICAL':
+            vscode.window.showErrorMessage(userMessage);
+            break;
+        }
+      }
 
-    // Return null or throw based on severity
-    if (severity === ErrorSeverity.CRITICAL) {
-      throw error;
-    }
+      // Attempt recovery if provided
+      if (context.recovery) {
+        try {
+          Logger.info(`Attempting recovery for ${context.operation}`);
+          return await context.recovery();
+        } catch (recoveryError) {
+          Logger.error(`Recovery failed for ${context.operation}:`, recoveryError as Error);
+          return null;
+        }
+      }
 
-    return null;
+      return null;
+    } catch (handlingError) {
+      Logger.error('Error in error handler:', handlingError as Error);
+      return null;
+    }
+  }
+
+  // Instance method for compatibility
+  async handleError(
+    error: Error | unknown,
+    context: {
+      severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      operation: string;
+      context?: any;
+      recovery?: () => Promise<any>;
+    }
+  ): Promise<any> {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    return EnhancedErrorHandler.handleError(errorObj, context);
   }
 
   private static async attemptRecovery(

@@ -270,4 +270,104 @@ export class SecurityService {
       enablePathValidation: true,
     };
   }
+
+  // Instance methods for extension compatibility
+  async validateWorkspacePath(workspacePath: string): Promise<{
+    isValid: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
+    
+    try {
+      SecurityService.setWorkspaceRoot(workspacePath);
+      const isAccessible = await SecurityService.validateFileAccess(workspacePath);
+      
+      if (!isAccessible) {
+        issues.push('Workspace path is not accessible');
+      }
+      
+      if (!SecurityService.isPathSafe(workspacePath)) {
+        issues.push('Workspace path contains unsafe patterns');
+      }
+      
+      return {
+        isValid: issues.length === 0,
+        issues
+      };
+    } catch (error) {
+      issues.push(`Validation error: ${error instanceof Error ? error.message : String(error)}`);
+      return {
+        isValid: false,
+        issues
+      };
+    }
+  }
+
+  async validatePath(filePath: string): Promise<{
+    isValid: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
+    
+    try {
+      if (!SecurityService.isPathSafe(filePath)) {
+        issues.push('Path contains unsafe patterns');
+      }
+      
+      if (!SecurityService.isExtensionAllowed(filePath)) {
+        issues.push('File extension not allowed');
+      }
+      
+      const isAccessible = await SecurityService.validateFileAccess(filePath);
+      if (!isAccessible) {
+        issues.push('File is not accessible');
+      }
+      
+      return {
+        isValid: issues.length === 0,
+        issues
+      };
+    } catch (error) {
+      issues.push(`Validation error: ${error instanceof Error ? error.message : String(error)}`);
+      return {
+        isValid: false,
+        issues
+      };
+    }
+  }
+
+  async scanContent(content: string): Promise<{
+    isSecure: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
+    
+    try {
+      if (content.includes('\0')) {
+        issues.push('Binary content detected');
+      }
+      
+      // Check for extremely long lines
+      const lines = content.split('\n');
+      const maxLineLength = 10000;
+      
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].length > maxLineLength) {
+          issues.push(`Very long line detected at line ${i + 1}`);
+          break; // Only report first occurrence
+        }
+      }
+      
+      return {
+        isSecure: issues.length === 0,
+        issues
+      };
+    } catch (error) {
+      issues.push(`Content scan error: ${error instanceof Error ? error.message : String(error)}`);
+      return {
+        isSecure: false,
+        issues
+      };
+    }
+  }
 } 

@@ -649,4 +649,20 @@ export class EnhancedConfigManager {
     this.activeProfile = null;
     Logger.info('EnhancedConfigManager cleaned up');
   }
+
+  // Additional methods for extension compatibility
+  async loadWorkspaceConfig(workspacePath: string): Promise<any> {
+    return EnhancedConfigManager.getConfiguration(workspacePath);
+  }
+
+  async reloadConfiguration(): Promise<void> {
+    await EnhancedConfigManager.loadWorkspaceConfigurations();
+  }
+
+  async getOptimizationProfile(profileName: string): Promise<any> {
+    const profile = EnhancedConfigManager.builtinProfiles.find(p => 
+      p.name.toLowerCase().includes(profileName.toLowerCase())
+    );
+    return profile?.settings || {};
+  }
 } 

@@ -500,28 +500,25 @@ export class WorkspaceManager {
 
     if (!workspace) {
       issues.push('Workspace not found');
+      recommendations.push('Initialize workspace before validation');
       return { isValid: false, issues, recommendations };
     }
 
-    // Check if workspace still exists
+    // Check workspace accessibility
     if (!fs.existsSync(workspace.rootPath)) {
-      issues.push('Workspace directory no longer exists');
+      issues.push('Workspace path does not exist');
     }
 
     // Check project type detection
     if (workspace.projectType === 'unknown') {
       issues.push('Could not detect project type');
-      recommendations.push('Ensure package.json exists and is properly formatted');
+      recommendations.push('Ensure workspace contains valid project files');
     }
 
-    // Check for Next.js projects without config
-    if (workspace.projectType.includes('nextjs') && !workspace.hasNextJsConfig) {
-      recommendations.push('Consider adding a next.config.js file for better project detection');
-    }
-
-    // Check file count
-    if (workspace.fileCount && workspace.fileCount > 10000) {
-      recommendations.push('Large project detected - consider using file filters for better performance');
+    // Check for common issues
+    if (workspace.fileCount === 0) {
+      issues.push('No files found in workspace');
+      recommendations.push('Check file permissions and ignore patterns');
     }
 
     return {
@@ -529,5 +526,11 @@ export class WorkspaceManager {
       issues,
       recommendations,
     };
+  }
+
+  // Instance methods for extension compatibility
+  async validateWorkspace(workspacePath: string): Promise<boolean> {
+    const result = WorkspaceManager.validateWorkspace(workspacePath);
+    return result.isValid;
   }
 } 

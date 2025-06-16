@@ -7,9 +7,8 @@ import { Logger } from './utils/Logger';
 import { OutputFormat, TargetLLM } from './core/types';
 import { ProjectValidator, ProjectValidation } from './services/ProjectValidator';
 
-
 export function activate(context: vscode.ExtensionContext) {
-  Logger.info('Next.js LLM Context extension is now active!');
+  Logger.info('Next.js LLM Context extension is now active with enhanced architecture!');
 
   // Initialize providers
   const fileTreeProvider = new FileTreeProvider(context);
@@ -25,17 +24,23 @@ export function activate(context: vscode.ExtensionContext) {
   const updateProjectContext = async () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (workspaceFolder) {
-      projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
-      isNextJsProject = await projectValidator.isValidNextJsProject();
-      
-      // Set context for conditional UI display
-      await vscode.commands.executeCommand('setContext', 'nextjsLlmContext.isNextJsProject', isNextJsProject);
-      
-      // Update project status provider
-      await projectStatusProvider.updateProject(workspaceFolder.uri.fsPath);
-      
-      if (!isNextJsProject) {
-        Logger.info('Current workspace is not a Next.js project - extension features will be limited');
+      try {
+        projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
+        isNextJsProject = await projectValidator.isValidNextJsProject();
+        
+        // Set context for conditional UI display
+        await vscode.commands.executeCommand('setContext', 'nextjsLlmContext.isNextJsProject', isNextJsProject);
+        
+        // Update project status provider
+        await projectStatusProvider.updateProject(workspaceFolder.uri.fsPath);
+        
+        if (!isNextJsProject) {
+          Logger.info('Current workspace is not a Next.js project - extension features will be limited');
+        }
+      } catch (error) {
+        Logger.error('Failed to validate workspace:', error as Error);
+        isNextJsProject = false;
+        await vscode.commands.executeCommand('setContext', 'nextjsLlmContext.isNextJsProject', false);
       }
     } else {
       isNextJsProject = false;
@@ -52,35 +57,114 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeWorkspaceFolders(updateProjectContext)
   );
 
-  // Helper function to validate project before command execution
+  // Enhanced helper function to validate project before command execution
   const validateProjectForCommand = async (): Promise<ProjectValidation | null> => {
-    if (!projectValidator) {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        vscode.window.showErrorMessage('No workspace folder found');
+    try {
+      if (!projectValidator) {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+          vscode.window.showErrorMessage('No workspace folder found');
+          return null;
+        }
+        
+        projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
+      }
+
+      const validation = await projectValidator.validateProject();
+      
+      if (!validation.isValidProject) {
+        const errorMessage = projectValidator.generateErrorMessage(validation);
+        const action = await vscode.window.showErrorMessage(
+          'This extension only works with Next.js projects',
+          { modal: true, detail: errorMessage },
+          'Learn More'
+        );
+        
+        if (action === 'Learn More') {
+          vscode.env.openExternal(vscode.Uri.parse('https://nextjs.org/docs/getting-started'));
+        }
+        
         return null;
       }
-      projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
-    }
 
-    const validation = await projectValidator.validateProject();
-    
-    if (!validation.isValidProject) {
-      const errorMessage = projectValidator.generateErrorMessage(validation);
-      const action = await vscode.window.showErrorMessage(
-        'This extension only works with Next.js projects',
-        { modal: true, detail: errorMessage },
-        'Learn More'
-      );
-      
-      if (action === 'Learn More') {
-        vscode.env.openExternal(vscode.Uri.parse('https://nextjs.org/docs/getting-started'));
-      }
-      
+      return validation;
+    } catch (error) {
+      Logger.error('Project validation failed:', error as Error);
+      vscode.window.showErrorMessage('Failed to validate project. Please check the logs for details.');
       return null;
     }
+  };
 
-    return validation;
+  // Enhanced context generation with error handling and optimization
+  const generateContextWithEnhancements = async (
+    assistantTypes: string[],
+    options: any,
+    progressMessage: string
+  ) => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      vscode.window.showErrorMessage('No workspace folder found');
+      return;
+    }
+
+    try {
+      const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
+      
+      await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: progressMessage,
+        cancellable: false
+      }, async (progress) => {
+        progress.report({ increment: 10, message: 'Initializing...' });
+        
+        progress.report({ increment: 30, message: 'Scanning files...' });
+        const results = await generator.generateUniversalContext(assistantTypes as any, options);
+
+        progress.report({ increment: 80, message: 'Saving results...' });
+        
+        // Save the results with enhanced error handling
+        let savedCount = 0;
+        for (const result of results) {
+          try {
+            const filePath = path.join(workspaceFolder.uri.fsPath, result.filename);
+            await vscode.workspace.fs.writeFile(
+              vscode.Uri.file(filePath), 
+              Buffer.from(result.content, 'utf8')
+            );
+            savedCount++;
+          } catch (error) {
+            Logger.error(`Failed to save ${result.filename}:`, error as Error);
+            // Continue with other files
+          }
+        }
+
+        progress.report({ increment: 100, message: 'Complete!' });
+
+        // Show enhanced success message with stats
+        if (savedCount > 0) {
+          const totalTokens = results.reduce((sum, r) => sum + (r.stats?.totalTokens || 0), 0);
+          const totalFiles = results.reduce((sum, r) => sum + (r.stats?.totalFiles || 0), 0);
+          
+          vscode.window.showInformationMessage(
+            `✅ Generated ${savedCount} context file(s)! ${totalFiles} files processed, ~${totalTokens.toLocaleString()} tokens.`
+          );
+        } else {
+          vscode.window.showWarningMessage('Context generation completed but no files were saved.');
+        }
+
+        // Auto-open first file if configured
+        if (vscode.workspace.getConfiguration('nextjsLlmContext').get('autoOpenOutput') && results.length > 0) {
+          const firstFile = path.join(workspaceFolder.uri.fsPath, results[0].filename);
+          const uri = vscode.Uri.file(firstFile);
+          await vscode.window.showTextDocument(uri);
+        }
+      });
+    } catch (error) {
+      Logger.error('Context generation failed:', error as Error);
+      vscode.window.showErrorMessage(
+        `Context generation failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   };
 
   // Learn Next.js command for non-Next.js projects
@@ -126,47 +210,24 @@ export function activate(context: vscode.ExtensionContext) {
       const validation = await validateProjectForCommand();
       if (!validation) return;
       
-      // Quick XML generation
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        vscode.window.showErrorMessage('No workspace folder found');
-        return;
-      }
-
-      try {
-        const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
-        
-        await vscode.window.withProgress({
-          location: vscode.ProgressLocation.Notification,
-          title: 'Generating quick XML context...',
-          cancellable: false
-        }, async () => {
-                     const results = await generator.generateUniversalContext(['Universal'], {
-            format: OutputFormat.XML,
-            includePrompts: false,
-            targetLLM: TargetLLM.CLAUDE,
-            includeProjectSummary: true,
-            includeFileStructure: true,
-            includeCodeMetrics: false,
-            useMarkdownTables: false,
-            includeLineNumbers: false,
-            addSectionAnchors: false,
-          });
-
-          // Save the first result
-          if (results.length > 0) {
-            const filePath = path.join(workspaceFolder.uri.fsPath, results[0].filename);
-            await vscode.workspace.fs.writeFile(
-              vscode.Uri.file(filePath), 
-              Buffer.from(results[0].content, 'utf8')
-            );
-            vscode.window.showInformationMessage('✅ Quick XML context generated!');
-          }
-        });
-      } catch (error) {
-        Logger.error('Failed to generate quick context:', error instanceof Error ? error : new Error(String(error)));
-        vscode.window.showErrorMessage(`Failed to generate context: ${error instanceof Error ? error.message : String(error)}`);
-      }
+      // Enhanced quick XML generation
+      await generateContextWithEnhancements(
+        ['Universal'],
+        {
+          format: OutputFormat.XML,
+          includePrompts: false,
+          targetLLM: TargetLLM.CLAUDE,
+          includeProjectSummary: true,
+          includeFileStructure: true,
+          includeCodeMetrics: false,
+          useMarkdownTables: false,
+          includeLineNumbers: false,
+          addSectionAnchors: false,
+          compactFormat: true,
+          maxTokensPerFile: 1000
+        },
+        'Generating quick XML context...'
+      );
     }
   );
 
@@ -176,47 +237,22 @@ export function activate(context: vscode.ExtensionContext) {
       const validation = await validateProjectForCommand();
       if (!validation) return;
       
-      // Redirect to universal context generator with prompts enabled
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        vscode.window.showErrorMessage('No workspace folder found');
-        return;
-      }
-
-      try {
-        const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
-        
-        await vscode.window.withProgress({
-          location: vscode.ProgressLocation.Notification,
-          title: 'Generating context with prompts...',
-          cancellable: false
-        }, async () => {
-          const results = await generator.generateUniversalContext(['Claude'], {
-            format: OutputFormat.MARKDOWN,
-            includePrompts: true,
-            targetLLM: TargetLLM.CLAUDE,
-            includeProjectSummary: true,
-            includeFileStructure: true,
-            includeCodeMetrics: true,
-            useMarkdownTables: true,
-            includeLineNumbers: false,
-            addSectionAnchors: true,
-          });
-
-          for (const result of results) {
-            const filePath = path.join(workspaceFolder.uri.fsPath, result.filename);
-            await vscode.workspace.fs.writeFile(
-              vscode.Uri.file(filePath), 
-              Buffer.from(result.content, 'utf8')
-            );
-          }
-
-          vscode.window.showInformationMessage('✅ Context with prompts generated!');
-        });
-      } catch (error) {
-        Logger.error('Failed to generate context with prompts:', error instanceof Error ? error : new Error(String(error)));
-        vscode.window.showErrorMessage(`Failed to generate context: ${error instanceof Error ? error.message : String(error)}`);
-      }
+      // Enhanced generation with prompts
+      await generateContextWithEnhancements(
+        ['Claude'],
+        {
+          format: OutputFormat.MARKDOWN,
+          includePrompts: true,
+          targetLLM: TargetLLM.CLAUDE,
+          includeProjectSummary: true,
+          includeFileStructure: true,
+          includeCodeMetrics: true,
+          useMarkdownTables: true,
+          includeLineNumbers: false,
+          addSectionAnchors: true,
+        },
+        'Generating context with prompts...'
+      );
     }
   );
 
@@ -270,24 +306,18 @@ export function activate(context: vscode.ExtensionContext) {
       const validation = await validateProjectForCommand();
       if (!validation) return;
       
-      // Use the existing universal context generator
+      // Use the universal context generator
       await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
     }
   );
 
-  // Universal context generation commands
+  // Enhanced universal context generation command
   const generateUniversalContextCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.generateUniversalContext',
     async () => {
       const validation = await validateProjectForCommand();
       if (!validation) return;
       
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        vscode.window.showErrorMessage('No workspace folder found');
-        return;
-      }
-
       // Show AI assistant selection with multi-select support
       const aiOptions = [
         { label: '🤖 Universal (All AI Assistants)', value: 'universal' },
@@ -310,98 +340,74 @@ export function activate(context: vscode.ExtensionContext) {
       const selectedFormats = selected.map(item => item.value as any);
       const formatNames = selected.map(item => item.label).join(', ');
 
-      try {
-        const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
-        
-        await vscode.window.withProgress({
-          location: vscode.ProgressLocation.Notification,
-          title: `Generating context for: ${formatNames}...`,
-          cancellable: false
-        }, async (_progress) => {
-          
-          // Ask about token optimization
-          const optimizationChoice = await vscode.window.showQuickPick([
-            { label: '🚀 Maximum Savings (70-80% reduction)', value: 'aggressive' },
-            { label: '⚖️ Balanced (40-60% reduction)', value: 'balanced' },
-            { label: '📄 Full Context (No optimization)', value: 'none' }
-          ], {
-            placeHolder: 'Select optimization level to save AI token costs'
-          });
+      // Enhanced optimization selection with token cost estimates
+      const optimizationChoice = await vscode.window.showQuickPick([
+        { 
+          label: '🚀 Maximum Savings (70-80% reduction)', 
+          value: 'aggressive',
+          detail: 'Best for cost optimization, includes only essential files'
+        },
+        { 
+          label: '⚖️ Balanced (40-60% reduction)', 
+          value: 'balanced',
+          detail: 'Good balance between completeness and cost'
+        },
+        { 
+          label: '📄 Full Context (No optimization)', 
+          value: 'none',
+          detail: 'Complete project context, higher token usage'
+        }
+      ], {
+        placeHolder: 'Select optimization level to save AI token costs'
+      });
 
-          // Get optimization options
-          let optimizationOptions = {};
-          if (optimizationChoice?.value === 'aggressive') {
-            optimizationOptions = {
-              maxTotalFiles: 20,
-              maxTokensPerFile: 1000,
-              priorityThreshold: 7,
-              excludeTechnologies: ['prisma', 'zenstack', 'drizzle'],
-              summarizeContent: true,
-              compactFormat: true
-            };
-          } else if (optimizationChoice?.value === 'balanced') {
-            optimizationOptions = {
-              maxTotalFiles: 50,
-              maxTokensPerFile: 2000,
-              priorityThreshold: 5,
-              excludeLargeFiles: true
-            };
-          }
-
-          const results = await generator.generateUniversalContext(selectedFormats, {
-            // Required GenerationOptions properties
-            format: OutputFormat.MARKDOWN,
-            includePrompts: true,
-            targetLLM: TargetLLM.CLAUDE,
-            
-            // UniversalContextOptions properties
-            includeProjectSummary: true,
-            includeFileStructure: true,
-            includeCodeMetrics: true,
-            useMarkdownTables: true,
-            includeLineNumbers: false,
-            addSectionAnchors: true,
-            
-            // Apply optimization options
-            ...optimizationOptions
-          });
-
-          // Save the results
-          for (const result of results) {
-            const filePath = path.join(workspaceFolder.uri.fsPath, result.filename);
-            await vscode.workspace.fs.writeFile(
-              vscode.Uri.file(filePath), 
-              Buffer.from(result.content, 'utf8')
-            );
-          }
-
-          // Show token savings if optimization was applied
-          if (optimizationChoice && optimizationChoice.value !== 'none') {
-            const totalOptimizedTokens = results.reduce((sum, r) => sum + r.stats.totalTokens, 0);
-            const savings = optimizationChoice.value === 'aggressive' ? 75 : 50;
-            vscode.window.showInformationMessage(
-              `✅ Context generated with ~${savings}% token savings! (${totalOptimizedTokens.toLocaleString()} tokens)`
-            );
-          } else {
-            vscode.window.showInformationMessage(`✅ Context generated for: ${formatNames}!`);
-          }
-
-          // Auto-open first file if configured
-          if (vscode.workspace.getConfiguration('nextjsLlmContext').get('autoOpenOutput') && results.length > 0) {
-            const firstFile = path.join(workspaceFolder.uri.fsPath, results[0].filename);
-            const uri = vscode.Uri.file(firstFile);
-            await vscode.window.showTextDocument(uri);
-          }
-        });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        Logger.error('Failed to generate universal context:', error instanceof Error ? error : new Error(String(error)));
-        vscode.window.showErrorMessage(`Failed to generate universal context: ${errorMessage}`);
+      // Get optimization options based on selection
+      let optimizationOptions = {};
+      if (optimizationChoice?.value === 'aggressive') {
+        optimizationOptions = {
+          maxTotalFiles: 20,
+          maxTokensPerFile: 1000,
+          priorityThreshold: 7,
+          excludeTechnologies: ['prisma', 'zenstack', 'drizzle'],
+          summarizeContent: true,
+          compactFormat: true
+        };
+      } else if (optimizationChoice?.value === 'balanced') {
+        optimizationOptions = {
+          maxTotalFiles: 50,
+          maxTokensPerFile: 2000,
+          priorityThreshold: 5,
+          excludeLargeFiles: true
+        };
       }
+
+      const finalOptions = {
+        // Required GenerationOptions properties
+        format: OutputFormat.MARKDOWN,
+        includePrompts: true,
+        targetLLM: TargetLLM.CLAUDE,
+        
+        // UniversalContextOptions properties
+        includeProjectSummary: true,
+        includeFileStructure: true,
+        includeCodeMetrics: true,
+        useMarkdownTables: true,
+        includeLineNumbers: false,
+        addSectionAnchors: true,
+        
+        // Apply optimization options
+        ...optimizationOptions
+      };
+
+      await generateContextWithEnhancements(
+        selectedFormats,
+        finalOptions,
+        `Generating context for: ${formatNames}...`
+      );
     }
   );
 
-  // Create ignore file command
+  // Enhanced ignore file creation command
   const createIgnoreFileCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.createIgnoreFile',
     async () => {
@@ -439,16 +445,25 @@ export function activate(context: vscode.ExtensionContext) {
         const templateContent = await vscode.workspace.fs.readFile(templatePath);
         const template = Buffer.from(templateContent).toString('utf8');
 
+        let successCount = 0;
         for (const option of selected) {
-          const filePath = vscode.Uri.joinPath(workspaceFolder.uri, option.value);
-          await vscode.workspace.fs.writeFile(filePath, Buffer.from(template, 'utf8'));
+          try {
+            const filePath = vscode.Uri.joinPath(workspaceFolder.uri, option.value);
+            await vscode.workspace.fs.writeFile(filePath, Buffer.from(template, 'utf8'));
+            successCount++;
+          } catch (error) {
+            Logger.error(`Failed to create ${option.value}:`, error as Error);
+          }
         }
 
-        vscode.window.showInformationMessage(`Created ${selected.length} ignore file(s) successfully!`);
+        if (successCount > 0) {
+          vscode.window.showInformationMessage(`Created ${successCount} ignore file(s) successfully!`);
+        } else {
+          vscode.window.showErrorMessage('Failed to create ignore files. Check the logs for details.');
+        }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        Logger.error('Failed to create ignore file:', error instanceof Error ? error : new Error(String(error)));
-        vscode.window.showErrorMessage(`Failed to create ignore file: ${errorMessage}`);
+        Logger.error('Failed to create ignore files:', error as Error);
+        vscode.window.showErrorMessage(`Failed to create ignore files: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   );
@@ -485,7 +500,7 @@ export function activate(context: vscode.ExtensionContext) {
     refreshCommand
   );
 
-  // Register configuration change listener
+  // Enhanced configuration change listener
   vscode.workspace.onDidChangeConfiguration(event => {
     if (event.affectsConfiguration('nextjsLlmContext')) {
       Logger.info('Configuration changed, refreshing providers...');
@@ -493,7 +508,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
-  Logger.info('All commands registered successfully');
+  Logger.info('All commands registered successfully with enhanced error handling and architecture');
 }
 
 export function deactivate() {
