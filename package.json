@@ -238,7 +238,7 @@
   "scripts": {
     "vscode:prepublish": "pnpm run build",
     "build": "pnpm run clean && tsc -p ./",
-    "build:production": "pnpm run clean && pnpm run lint && pnpm run test && tsc -p ./",
+    "build:production": "pnpm run clean && pnpm run lint && pnpm run typecheck && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "clean": "rimraf out",
     "test": "pnpm run test:unit && pnpm run test:integration",
@@ -267,7 +267,7 @@
     "security:check": "pnpm audit --audit-level moderate",
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
-    "docs:generate": "typedoc --out docs src/",
+    "docs:generate": "typedoc --out docs --entryPointStrategy expand src/",
     "version:patch": "npm version patch && git push origin main --tags",
     "version:minor": "npm version minor && git push origin main --tags",
     "version:major": "npm version major && git push origin main --tags",
@@ -280,7 +280,15 @@
     "release:publish": "pnpm run ci && pnpm run version:patch && pnpm run publish:all",
     "setup:dev": "pnpm install && pnpm run build",
     "validate": "pnpm run lint && pnpm run typecheck && pnpm run format:check",
-    "benchmark": "node scripts/benchmark.js"
+    "benchmark": "node scripts/benchmark.js",
+    "workflow:test": "./scripts/test-workflow.sh test",
+    "workflow:build": "./scripts/test-workflow.sh build",
+    "workflow:quality": "./scripts/test-workflow.sh quality",
+    "workflow:security": "./scripts/test-workflow.sh security",
+    "workflow:all": "./scripts/test-workflow.sh all",
+    "workflow:list": "act --list",
+    "workflow:dry-run": "act --dryrun",
+    "workflow:test-direct": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:unit && pnpm run analyze:deps && pnpm run docs:generate && pnpm run security:check"
   },
   "keywords": [
     "next.js",
@@ -322,7 +330,7 @@
     "ovsx": "^0.9.5",
     "prettier": "^3.5.3",
     "rimraf": "^5.0.7",
-    "typedoc": "^0.28.2",
+    "typedoc": "^0.28.5",
     "typescript": "^5.4.5"
   },
   "dependencies": {

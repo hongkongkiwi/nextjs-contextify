@@ -4,13 +4,26 @@
 # Compiled output
 /out
 
+# Generated documentation
+/docs
+
+# VS Code extension testing
+.vscode-test/
+
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
 # Operating System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Icon?
 
 # IDE-specific files
 .vscode/*
@@ -18,7 +31,6 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.vscode-test
 
 # TypeScript cache
 *.tsbuildinfo
@@ -33,23 +45,45 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+.cache/
 
 # Test coverage
 /coverage
+.nyc_output/
 
 # Production build
 /dist
 
-# Yarn
+# Package manager files
 yarn-error.log
 .yarn-integrity
-
-# npm
 .npm
+.pnpm-debug.log*
 
-#VScode
+# VS Code extension packages
 *.vsix
 
-# Optional: If you don't want to track package manager lock files
+# Linting and analysis output
+lint-results.json
+.eslintcache
+
+# Lock files (optional - uncomment if you don't want to track them)
 # package-lock.json
 # yarn.lock
+# pnpm-lock.yaml
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*

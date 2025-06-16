@@ -1,0 +1,24 @@
+# Default platform for act
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Use container architecture
+--container-architecture linux/amd64
+
+# Don't pull docker images every time
+--reuse
+
+# Set environment variables for local testing
+--env NODE_ENV=test
+--env CI=true
+--env DISPLAY=:99
+
+# Secret handling (these will be empty for local testing)
+--secret CODECOV_TOKEN=""
+--secret VSCE_PAT=""
+--secret OVSX_PAT=""
+--secret GITHUB_TOKEN="dummy-token"
+
+# Platform mapping
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+--platform ubuntu-22.04=catthehacker/ubuntu:act-22.04
+--platform ubuntu-20.04=catthehacker/ubuntu:act-20.04 
