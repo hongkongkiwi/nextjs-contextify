@@ -68,19 +68,29 @@
         "command": "nextjsLlmContext.refresh",
         "title": "🔄 Refresh",
         "category": "Next.js LLM Context"
+      },
+      {
+        "command": "nextjsLlmContext.learnNextJs",
+        "title": "📚 Learn about Next.js",
+        "category": "Next.js LLM Context"
       }
     ],
     "views": {
       "nextjsLlmContext": [
         {
+          "id": "nextjsLlmContextStatus",
+          "name": "📊 Project Status",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
           "id": "nextjsLlmContextExplorer",
           "name": "📁 File Selection",
-          "when": "workspaceFolderCount > 0"
+          "when": "workspaceFolderCount > 0 && nextjsLlmContext.isNextJsProject"
         },
         {
           "id": "nextjsLlmContextSteps",
           "name": "🚀 Generation Steps",
-          "when": "workspaceFolderCount > 0"
+          "when": "workspaceFolderCount > 0 && nextjsLlmContext.isNextJsProject"
         }
       ]
     },
@@ -89,7 +99,8 @@
         {
           "id": "nextjsLlmContext",
           "title": "Next.js LLM Context",
-          "icon": "$(file-code)"
+          "icon": "$(file-code)",
+          "when": "workspaceFolderCount > 0"
         }
       ]
     },
@@ -97,22 +108,22 @@
       "view/title": [
         {
           "command": "extension.openContextifyUI",
-          "when": "view == nextjsLlmContextExplorer",
+          "when": "view == nextjsLlmContextExplorer && nextjsLlmContext.isNextJsProject",
           "group": "navigation@1"
         },
         {
           "command": "nextjsLlmContextExplorer.refresh",
-          "when": "view == nextjsLlmContextExplorer",
+          "when": "view == nextjsLlmContextExplorer && nextjsLlmContext.isNextJsProject",
           "group": "navigation@2"
         },
         {
           "command": "nextjsLlmContextExplorer.selectAll",
-          "when": "view == nextjsLlmContextExplorer",
+          "when": "view == nextjsLlmContextExplorer && nextjsLlmContext.isNextJsProject",
           "group": "navigation@3"
         },
         {
           "command": "nextjsLlmContextExplorer.deselectAll",
-          "when": "view == nextjsLlmContextExplorer",
+          "when": "view == nextjsLlmContextExplorer && nextjsLlmContext.isNextJsProject",
           "group": "navigation@4"
         }
       ]

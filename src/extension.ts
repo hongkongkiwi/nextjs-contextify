@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { UniversalContextGenerator } from './services/UniversalContextGenerator';
 import { FileTreeProvider } from './providers/FileTreeProvider';
+import { ProjectStatusProvider } from './providers/ProjectStatusProvider';
 import { Logger } from './utils/Logger';
 import { OutputFormat, TargetLLM } from './core/types';
+import { ProjectValidator, ProjectValidation } from './services/ProjectValidator';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -11,12 +13,108 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Initialize providers
   const fileTreeProvider = new FileTreeProvider(context);
+  const projectStatusProvider = new ProjectStatusProvider(context);
   vscode.window.registerTreeDataProvider('nextjsLlmContextExplorer', fileTreeProvider);
+  vscode.window.registerTreeDataProvider('nextjsLlmContextStatus', projectStatusProvider);
+
+  // Set up project validation context
+  let projectValidator: ProjectValidator | null = null;
+  let isNextJsProject = false;
+
+  // Initialize project validation when workspace changes
+  const updateProjectContext = async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (workspaceFolder) {
+      projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
+      isNextJsProject = await projectValidator.isValidNextJsProject();
+      
+      // Set context for conditional UI display
+      await vscode.commands.executeCommand('setContext', 'nextjsLlmContext.isNextJsProject', isNextJsProject);
+      
+      // Update project status provider
+      await projectStatusProvider.updateProject(workspaceFolder.uri.fsPath);
+      
+      if (!isNextJsProject) {
+        Logger.info('Current workspace is not a Next.js project - extension features will be limited');
+      }
+    } else {
+      isNextJsProject = false;
+      await vscode.commands.executeCommand('setContext', 'nextjsLlmContext.isNextJsProject', false);
+      projectStatusProvider.refresh();
+    }
+  };
+
+  // Initial project validation
+  updateProjectContext();
+
+  // Re-validate when workspace folders change
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(updateProjectContext)
+  );
+
+  // Helper function to validate project before command execution
+  const validateProjectForCommand = async (): Promise<ProjectValidation | null> => {
+    if (!projectValidator) {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage('No workspace folder found');
+        return null;
+      }
+      projectValidator = new ProjectValidator(workspaceFolder.uri.fsPath);
+    }
+
+    const validation = await projectValidator.validateProject();
+    
+    if (!validation.isValidProject) {
+      const errorMessage = projectValidator.generateErrorMessage(validation);
+      const action = await vscode.window.showErrorMessage(
+        'This extension only works with Next.js projects',
+        { modal: true, detail: errorMessage },
+        'Learn More'
+      );
+      
+      if (action === 'Learn More') {
+        vscode.env.openExternal(vscode.Uri.parse('https://nextjs.org/docs/getting-started'));
+      }
+      
+      return null;
+    }
+
+    return validation;
+  };
+
+  // Learn Next.js command for non-Next.js projects
+  const learnNextJsCommand = vscode.commands.registerCommand(
+    'nextjsLlmContext.learnNextJs',
+    async () => {
+      const choice = await vscode.window.showInformationMessage(
+        'Learn about Next.js and how to get started with this extension',
+        'Open Next.js Docs',
+        'Create New Project',
+        'Extension Documentation'
+      );
+
+      switch (choice) {
+        case 'Open Next.js Docs':
+          vscode.env.openExternal(vscode.Uri.parse('https://nextjs.org/docs/getting-started'));
+          break;
+        case 'Create New Project':
+          vscode.env.openExternal(vscode.Uri.parse('https://nextjs.org/docs/getting-started/installation'));
+          break;
+        case 'Extension Documentation':
+          vscode.env.openExternal(vscode.Uri.parse('https://github.com/your-repo/nextjs-llm-context#readme'));
+          break;
+      }
+    }
+  );
 
   // Legacy command implementations for backward compatibility
   const generateCodeBaseContextCommand = vscode.commands.registerCommand(
     'extension.generateCodeBaseContext',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       // Redirect to the universal context generator
       await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
     }
@@ -25,6 +123,9 @@ export function activate(context: vscode.ExtensionContext) {
   const generateQuickContextCommand = vscode.commands.registerCommand(
     'extension.generateQuickContext',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       // Quick XML generation
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -72,6 +173,9 @@ export function activate(context: vscode.ExtensionContext) {
   const generateWithPromptsCommand = vscode.commands.registerCommand(
     'extension.generateWithPrompts',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       // Redirect to universal context generator with prompts enabled
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -128,7 +232,10 @@ export function activate(context: vscode.ExtensionContext) {
   // Tree view commands
   const explorerRefreshCommand = vscode.commands.registerCommand(
     'nextjsLlmContextExplorer.refresh',
-    () => {
+    async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File explorer refreshed!');
     }
@@ -136,7 +243,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   const selectAllCommand = vscode.commands.registerCommand(
     'nextjsLlmContextExplorer.selectAll',
-    () => {
+    async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       fileTreeProvider.selectAll();
       vscode.window.showInformationMessage('All files selected!');
     }
@@ -144,7 +254,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   const deselectAllCommand = vscode.commands.registerCommand(
     'nextjsLlmContextExplorer.deselectAll',
-    () => {
+    async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       fileTreeProvider.deselectAll();
       vscode.window.showInformationMessage('All files deselected!');
     }
@@ -154,6 +267,9 @@ export function activate(context: vscode.ExtensionContext) {
   const generateContextCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.generateContext',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       // Use the existing universal context generator
       await vscode.commands.executeCommand('nextjsLlmContext.generateUniversalContext');
     }
@@ -163,6 +279,9 @@ export function activate(context: vscode.ExtensionContext) {
   const generateUniversalContextCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.generateUniversalContext',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
         vscode.window.showErrorMessage('No workspace folder found');
@@ -286,6 +405,9 @@ export function activate(context: vscode.ExtensionContext) {
   const createIgnoreFileCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.createIgnoreFile',
     async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
         vscode.window.showErrorMessage('No workspace folder found');
@@ -334,7 +456,10 @@ export function activate(context: vscode.ExtensionContext) {
   // Refresh file tree command
   const refreshCommand = vscode.commands.registerCommand(
     'nextjsLlmContext.refresh',
-    () => {
+    async () => {
+      const validation = await validateProjectForCommand();
+      if (!validation) return;
+      
       fileTreeProvider.refresh();
       vscode.window.showInformationMessage('File tree refreshed!');
     }
@@ -342,6 +467,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register all commands
   context.subscriptions.push(
+    // Project validation commands
+    learnNextJsCommand,
     // Legacy commands
     generateCodeBaseContextCommand,
     generateQuickContextCommand,
