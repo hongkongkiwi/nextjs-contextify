@@ -254,7 +254,7 @@
     "watch": "tsc -watch -p ./",
     "clean": "rimraf out",
     "test": "pnpm run test:unit && pnpm run test:integration",
-    "test:unit": "mocha 'out/test/unit/**/*.test.js' --ui tdd --timeout 10000",
+    "test:unit": "mocha 'out/test/unit/**/*.test.js' --ui tdd --timeout 10000 --require out/test/setup.js",
     "test:integration": "vscode-test",
     "test:integration:electron": "node out/test/runTest.js",
     "test:integration:local": "./scripts/test-integration-local.sh",
