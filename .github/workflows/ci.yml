@@ -41,10 +41,12 @@ jobs:
     - name: Setup Xvfb for VS Code tests
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb
+        sudo apt-get install -y xvfb x11-utils
         echo "DISPLAY=:99" >> $GITHUB_ENV
-        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        sleep 3
+        echo "LIBGL_ALWAYS_INDIRECT=1" >> $GITHUB_ENV
+        echo "ELECTRON_DISABLE_SECURITY_WARNINGS=true" >> $GITHUB_ENV
+        Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
+        sleep 5
       if: matrix.node-version == '22.x'
       
     - name: Debug CI environment for VS Code tests

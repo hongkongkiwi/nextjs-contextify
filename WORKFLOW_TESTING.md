@@ -1,22 +1,131 @@
 # Workflow Testing Guide
 
-This guide covers testing GitHub Actions workflows locally using `act` and direct command execution.
+This guide explains how to test GitHub Actions workflows locally before pushing changes to avoid CI failures.
 
-## Quick Start
+## Quick Commands
 
 ```bash
-# Verify version configuration
-pnpm run verify:versions
+# Test all CI commands locally (recommended before pushing)
+pnpm run validate:workflows
 
-# Test all workflow scripts directly
-pnpm run workflow:test-direct
+# Test only CI commands (faster)
+pnpm run test:ci-commands
 
-# Test specific workflow job with act
-pnpm run workflow:quality
+# Test specific workflow syntax
+pnpm run test:workflow:ci
+pnpm run test:workflow:build
 
-# List all available workflows
-pnpm run workflow:list
+# Test headless mode (simulates CI environment)
+pnpm run test:headless
 ```
+
+## Validation Tools
+
+### 1. `pnpm run validate:workflows` - Comprehensive Validation
+- ✅ Tests all CI commands locally
+- ✅ Validates workflow syntax with `act`
+- ✅ Confirms unit tests work without display server
+- ✅ Verifies integration tests are properly conditional
+
+### 2. `pnpm run test:ci-commands` - Command Testing Only
+- Tests the exact commands used in workflows
+- Simulates GitHub Actions environment
+- Faster than full validation
+
+### 3. Individual Workflow Testing
+- `pnpm run test:workflow:ci` - Main CI workflow
+- `pnpm run test:workflow:build` - Build and upload workflow
+
+### 4. Headless Mode Testing
+- `pnpm run test:headless` - Test VS Code extension in headless mode
+- Simulates GitHub Actions environment more closely
+- Helps identify GUI/display dependencies
+
+## Common Issues & Solutions
+
+### Unit Test Pattern Issues
+**Problem**: `Error: No test files found: "out/test/unit/**/*.test.js"`
+
+**Solution**: Use quoted glob patterns in package.json:
+```json
+"test:unit": "mocha 'out/test/unit/**/*.test.js' --ui tdd --timeout 10000"
+```
+
+### Integration Tests in Wrong Workflows
+**Problem**: VS Code tests failing with X server errors in build workflows
+
+**Solution**: Use `test:unit` instead of `test` in build/release/publish workflows:
+```yaml
+- name: Run tests
+  run: pnpm run test:unit
+  # Only run unit tests here - integration tests are covered by main CI workflow
+```
+
+### Display Server Requirements
+**Integration tests require**:
+- Xvfb setup in CI
+- DISPLAY environment variable
+- Only run on specific Node.js versions (22.x)
+
+**Unit tests**:
+- ✅ Work without display server
+- ✅ Run on all Node.js versions
+- ✅ Suitable for build/release workflows
+
+### Headless vs Local Environment
+**Key differences between local and CI:**
+- **Display**: Local has GUI, CI is headless with Xvfb
+- **Electron**: Different behavior in headless mode
+- **Environment variables**: CI has specific vars (LIBGL_ALWAYS_INDIRECT, etc.)
+- **File permissions**: Different in CI containers
+- **Performance**: CI may be slower, affecting timeouts
+
+**Use `pnpm run test:headless` to simulate CI conditions locally**
+
+## Workflow Structure
+
+### Main CI (`ci.yml`)
+- **Unit tests**: All Node.js versions (18.x, 20.x, 22.x)
+- **Integration tests**: Only Node.js 22.x with Xvfb
+- **Full testing suite**: lint, typecheck, coverage, security
+
+### Build/Release Workflows
+- **Unit tests only**: Fast validation
+- **No display server needed**: Simpler setup
+- **Focus on packaging**: Build, lint, package
+
+## Before Pushing Changes
+
+Always run:
+```bash
+pnpm run validate:workflows
+```
+
+This ensures:
+1. All commands work locally
+2. Workflow syntax is valid
+3. Unit/integration test separation is correct
+4. Display server requirements are met
+
+## Troubleshooting
+
+### act Issues
+```bash
+# Check act version
+act --version
+
+# List available workflows
+act --list
+
+# Test specific workflow
+act -W .github/workflows/ci.yml --list
+```
+
+### Common Fixes
+1. **Quote glob patterns** in package.json scripts
+2. **Use `test:unit`** in build workflows
+3. **Use `test:ci`** only in main CI workflow
+4. **Set up Xvfb** only where integration tests run
 
 ## Version Management
 
@@ -88,102 +197,6 @@ act -W .github/workflows/ci.yml --job quality
 # Test with specific workflow file and job
 act -W .github/workflows/ci.yml --job test --matrix node-version:22.x
 ```
-
-## Common Issues and Solutions
-
-### Issue 1: VS Code Tests in CI
-
-**Problem**: Integration tests require VS Code which isn't available in CI without setup.
-
-**Solution**: The workflow uses Xvfb (Virtual Framebuffer) for headless testing:
-
-```yaml
-- name: Setup Xvfb for VS Code tests
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y xvfb
-    echo "DISPLAY=:99" >> $GITHUB_ENV
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-  if: matrix.node-version == '22.x'
-```
-
-**Key improvements:**
-- Uses `$GITHUB_ENV` to persist DISPLAY variable across workflow steps
-- Adds `sleep 3` to ensure Xvfb is ready before tests run
-- Enhanced VS Code launch args for better CI stability
-
-### Issue 2: Act Authentication
-
-**Problem**: Act can't clone GitHub Actions due to authentication.
-
-**Solution**: Use direct command testing or run act with `--dryrun`:
-
-```bash
-# See what act would do without running
-act --dryrun -W .github/workflows/ci.yml --job quality
-```
-
-### Issue 3: Circular Dependencies
-
-**Problem**: `build:production` was calling tests, but tests were already run in test job.
-
-**Solution**: Fixed `build:production` to avoid running tests:
-
-```json
-{
-  "build:production": "pnpm run clean && pnpm run lint && pnpm run typecheck && tsc -p ./"
-}
-```
-
-### Issue 4: Docs Generation
-
-**Problem**: TypeDoc couldn't find entry points.
-
-**Solution**: Added `--entryPointStrategy expand` flag:
-
-```json
-{
-  "docs:generate": "typedoc --out docs --entryPointStrategy expand src/"
-}
-```
-
-## Workflow Jobs Breakdown
-
-### Test Job
-
-Runs on Node.js 18.x, 20.x, 22.x matrix:
-
-- Linting (`eslint`)
-- Type checking (`tsc --noEmit`)
-- Build (`tsc`)
-- Unit tests (`mocha`)
-- Integration tests (VS Code - only on 22.x)
-- Coverage report (only on 22.x)
-- Security audit (`pnpm audit`)
-
-### Build Job
-
-Depends on test job:
-
-- Build production (`build:production`)
-- Package extension (`vsce package`)
-- Upload VSIX artifact
-
-### Quality Job
-
-Independent job:
-
-- Analyze dependencies (`madge --circular`)
-- Generate documentation (`typedoc`)
-- Deploy docs to GitHub Pages (on main branch)
-
-### Security Job
-
-Runs on pull requests:
-
-- Trivy vulnerability scanner
-- Upload SARIF results to GitHub
 
 ## Local Testing Scripts
 

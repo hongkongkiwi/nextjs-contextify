@@ -243,7 +243,7 @@
     "watch": "tsc -watch -p ./",
     "clean": "rimraf out",
     "test": "pnpm run test:unit && pnpm run test:integration",
-    "test:unit": "mocha out/test/unit/**/*.test.js --ui tdd --timeout 10000",
+    "test:unit": "mocha 'out/test/unit/**/*.test.js' --ui tdd --timeout 10000",
     "test:integration": "vscode-test",
     "test:integration:electron": "node out/test/runTest.js",
     "test:integration:local": "./scripts/test-integration-local.sh",
@@ -292,7 +292,13 @@
     "workflow:dry-run": "act --dryrun",
     "workflow:test-direct": "pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:unit && pnpm run analyze:deps && pnpm run docs:generate && pnpm run security:check",
     "verify:versions": "./scripts/verify-versions.sh",
-    "debug:ci-env": "./scripts/debug-ci-env.sh"
+    "debug:ci-env": "./scripts/debug-ci-env.sh",
+    "test:workflow": "./scripts/test-workflow-local.sh",
+    "test:workflow:ci": "./scripts/test-workflow-local.sh ci",
+    "test:workflow:build": "./scripts/test-workflow-local.sh build-upload",
+    "test:ci-commands": "./scripts/test-ci-commands.sh",
+    "validate:workflows": "./scripts/validate-workflows.sh",
+    "test:headless": "./scripts/test-headless.sh"
   },
   "keywords": [
     "next.js",
