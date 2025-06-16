@@ -11,7 +11,153 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Initialize providers
   const fileTreeProvider = new FileTreeProvider(context);
-  vscode.window.registerTreeDataProvider('nextjsContextify', fileTreeProvider);
+  vscode.window.registerTreeDataProvider('nextjsContextifyExplorer', fileTreeProvider);
+
+  // Legacy command implementations for backward compatibility
+  const generateCodeBaseContextCommand = vscode.commands.registerCommand(
+    'extension.generateCodeBaseContext',
+    async () => {
+      // Redirect to the universal context generator
+      await vscode.commands.executeCommand('nextjsContextify.generateUniversalContext');
+    }
+  );
+
+  const generateQuickContextCommand = vscode.commands.registerCommand(
+    'extension.generateQuickContext',
+    async () => {
+      // Quick XML generation
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage('No workspace folder found');
+        return;
+      }
+
+      try {
+        const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
+        
+        await vscode.window.withProgress({
+          location: vscode.ProgressLocation.Notification,
+          title: 'Generating quick XML context...',
+          cancellable: false
+        }, async () => {
+                     const results = await generator.generateUniversalContext(['Universal'], {
+            format: OutputFormat.XML,
+            includePrompts: false,
+            targetLLM: TargetLLM.CLAUDE,
+            includeProjectSummary: true,
+            includeFileStructure: true,
+            includeCodeMetrics: false,
+            useMarkdownTables: false,
+            includeLineNumbers: false,
+            addSectionAnchors: false,
+          });
+
+          // Save the first result
+          if (results.length > 0) {
+            const filePath = path.join(workspaceFolder.uri.fsPath, results[0].filename);
+            await vscode.workspace.fs.writeFile(
+              vscode.Uri.file(filePath), 
+              Buffer.from(results[0].content, 'utf8')
+            );
+            vscode.window.showInformationMessage('✅ Quick XML context generated!');
+          }
+        });
+      } catch (error) {
+        Logger.error('Failed to generate quick context:', error instanceof Error ? error : new Error(String(error)));
+        vscode.window.showErrorMessage(`Failed to generate context: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  );
+
+  const generateWithPromptsCommand = vscode.commands.registerCommand(
+    'extension.generateWithPrompts',
+    async () => {
+      // Redirect to universal context generator with prompts enabled
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage('No workspace folder found');
+        return;
+      }
+
+      try {
+        const generator = new UniversalContextGenerator(workspaceFolder.uri.fsPath);
+        
+        await vscode.window.withProgress({
+          location: vscode.ProgressLocation.Notification,
+          title: 'Generating context with prompts...',
+          cancellable: false
+        }, async () => {
+          const results = await generator.generateUniversalContext(['Claude'], {
+            format: OutputFormat.MARKDOWN,
+            includePrompts: true,
+            targetLLM: TargetLLM.CLAUDE,
+            includeProjectSummary: true,
+            includeFileStructure: true,
+            includeCodeMetrics: true,
+            useMarkdownTables: true,
+            includeLineNumbers: false,
+            addSectionAnchors: true,
+          });
+
+          for (const result of results) {
+            const filePath = path.join(workspaceFolder.uri.fsPath, result.filename);
+            await vscode.workspace.fs.writeFile(
+              vscode.Uri.file(filePath), 
+              Buffer.from(result.content, 'utf8')
+            );
+          }
+
+          vscode.window.showInformationMessage('✅ Context with prompts generated!');
+        });
+      } catch (error) {
+        Logger.error('Failed to generate context with prompts:', error instanceof Error ? error : new Error(String(error)));
+        vscode.window.showErrorMessage(`Failed to generate context: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  );
+
+  const openContextifyUICommand = vscode.commands.registerCommand(
+    'extension.openContextifyUI',
+    async () => {
+      // Show the tree view focus
+      await vscode.commands.executeCommand('nextjsContextifyExplorer.focus');
+      vscode.window.showInformationMessage('Next.js Contextify UI is in the sidebar!');
+    }
+  );
+
+  // Tree view commands
+  const explorerRefreshCommand = vscode.commands.registerCommand(
+    'nextjsContextifyExplorer.refresh',
+    () => {
+      fileTreeProvider.refresh();
+      vscode.window.showInformationMessage('File explorer refreshed!');
+    }
+  );
+
+  const selectAllCommand = vscode.commands.registerCommand(
+    'nextjsContextifyExplorer.selectAll',
+    () => {
+      fileTreeProvider.selectAll();
+      vscode.window.showInformationMessage('All files selected!');
+    }
+  );
+
+  const deselectAllCommand = vscode.commands.registerCommand(
+    'nextjsContextifyExplorer.deselectAll',
+    () => {
+      fileTreeProvider.deselectAll();
+      vscode.window.showInformationMessage('All files deselected!');
+    }
+  );
+
+  // Main context generation command (used by tests and UI)
+  const generateContextCommand = vscode.commands.registerCommand(
+    'nextjsContextify.generateContext',
+    async () => {
+      // Use the existing universal context generator
+      await vscode.commands.executeCommand('nextjsContextify.generateUniversalContext');
+    }
+  );
 
   // Universal context generation commands
   const generateUniversalContextCommand = vscode.commands.registerCommand(
@@ -136,8 +282,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-
-
   // Create ignore file command
   const createIgnoreFileCommand = vscode.commands.registerCommand(
     'nextjsContextify.createIgnoreFile',
@@ -198,6 +342,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register all commands
   context.subscriptions.push(
+    // Legacy commands
+    generateCodeBaseContextCommand,
+    generateQuickContextCommand,
+    generateWithPromptsCommand,
+    openContextifyUICommand,
+    // Tree view commands
+    explorerRefreshCommand,
+    selectAllCommand,
+    deselectAllCommand,
+    // Main commands
+    generateContextCommand,
     generateUniversalContextCommand,
     createIgnoreFileCommand,
     refreshCommand
