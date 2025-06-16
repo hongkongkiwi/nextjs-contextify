@@ -126,6 +126,7 @@ act -W .github/workflows/ci.yml --list
 2. **Use `test:unit`** in build workflows
 3. **Use `test:ci`** only in main CI workflow
 4. **Set up Xvfb** only where integration tests run
+5. **Add timeouts** for commands that show UI dialogs in headless mode
 
 ## Version Management
 
