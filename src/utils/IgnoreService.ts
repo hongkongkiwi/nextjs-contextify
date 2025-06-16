@@ -12,92 +12,46 @@ export class IgnoreService {
     this.ignoreFilter = this.createIgnoreFilter();
   }
 
-  private createIgnoreFilter() {
+  private createIgnoreFilter(): ReturnType<typeof ignore> {
     const ig = ignore();
 
-    // Default patterns for VS Code extensions and common build artifacts
-    const defaultIgnore = [
-      'node_modules/**',
-      '.next/**',
-      '.swc/**',
-      'out/**',
-      'build/**',
-      'dist/**',
-      '.turbo/**',
-      '.git/**',
-      '.vscode/**',
-      '.idea/**',
-      '.cursor/**',
-      '.windsurf/**',
-      'package-lock.json',
-      'yarn.lock',
-      'pnpm-lock.yaml',
-      'bun.lockb',
-      // Media files
-      '**/*.jpg',
-      '**/*.jpeg',
-      '**/*.png',
-      '**/*.gif',
-      '**/*.ico',
-      '**/*.svg',
-      '**/*.webp',
-      '**/*.avif',
-      '**/*.woff',
-      '**/*.woff2',
-      '**/*.ttf',
-      '**/*.eot',
-      '**/*.otf',
-      '**/*.mp4',
-      '**/*.webm',
-      '**/*.ogg',
-      '**/*.mp3',
-      '**/*.wav',
-      '**/*.avi',
-      '**/*.mov',
-      '**/*.pdf',
-      '**/*.zip',
-      '**/*.tar',
-      '**/*.gz',
-      '**/*.rar',
-      '**/*.7z',
-      // Logs and temp files
-      '**/*.log',
-      '**/*.tmp',
-      '**/tmp/**',
-      '**/temp/**',
-      'coverage/**',
-      '.nyc_output/**',
-      '**/*.generated.*',
-      '**/generated/**',
-      // Additional patterns for modern Next.js projects
-      '.vercel/**',
-      '.netlify/**',
-      '.firebase/**',
-      '.supabase/**',
-      'storybook-static/**',
-      '.storybook/public/**',
-      'playwright-report/**',
-      'test-results/**',
-      '.contentlayer/**',
-      '.velite/**',
-      '.astro/**',
-      'android/**',
-      'ios/**', // React Native files
-      '.expo/**',
-      '.eas/**', // Expo files
-      'amplify/**',
-      '.amplify/**', // AWS Amplify files
-    ];
-    ig.add(defaultIgnore);
+    // Always ignore common build/cache directories
+    ig.add([
+      'node_modules/',
+      '.git/',
+      '.next/',
+      'dist/',
+      'build/',
+      '.turbo/',
+      '.cache/',
+      'coverage/',
+      '.nyc_output/',
+      '.swc/',
+      '.tsbuildinfo',
+      '*.log',
+    ]);
 
-    // Add .gitignore patterns
+    // Always ignore AI assistant ignore files themselves
+    ig.add([
+      '.gitignore',
+      '.cursorignore',
+      '.codiumignore',
+      '.clineignore',
+      '.rooignore',
+      '.windsurfignore',
+      '.claudeignore',
+      '.aiignore',
+      '.nextjscollectorignore',
+    ]);
+
+    // Add patterns from .gitignore
     this.addGitignorePatterns(ig);
 
-    // Add custom ignore patterns from .nextjscollectorignore
+    // Add patterns from custom ignore files (AI assistants)
     this.addCustomIgnorePatterns(ig);
 
-    // Add user-configured ignore patterns from VS Code settings
-    this.addVSCodeIgnorePatterns(ig);
+    // Add patterns from global gitignore files
+    this.addGlobalGitignorePatterns(ig);
 
     return ig;
   }
@@ -161,21 +115,23 @@ export class IgnoreService {
     }
   }
 
-  private addVSCodeIgnorePatterns(ig: ReturnType<typeof ignore>): void {
-    try {
-      // This would be called from VS Code context to get user settings
-      // For now, we'll add some sensible defaults that can be overridden
-      const vscodeIgnorePatterns: string[] = [
-        // Add any patterns from VS Code settings if available
-        // These would be read from vscode.workspace.getConfiguration('nextjsContextify').get('customIgnorePatterns')
-      ];
+  private addGlobalGitignorePatterns(ig: ReturnType<typeof ignore>): void {
+    // Check for global gitignore files
+    const globalIgnoreFiles = [
+      path.join(require('os').homedir(), '.gitignore_global'),
+      path.join(require('os').homedir(), '.config', 'git', 'ignore'),
+    ];
 
-      if (vscodeIgnorePatterns.length > 0) {
-        ig.add(vscodeIgnorePatterns);
-        Logger.debug('Added VS Code configuration ignore patterns');
+    for (const globalIgnorePath of globalIgnoreFiles) {
+      if (fs.existsSync(globalIgnorePath)) {
+        try {
+          const globalIgnoreContent = fs.readFileSync(globalIgnorePath, 'utf8');
+          ig.add(globalIgnoreContent);
+          Logger.debug(`Added global gitignore patterns from ${globalIgnorePath}`);
+        } catch (error) {
+          Logger.warn(`Failed to read global gitignore from ${globalIgnorePath}:`, error);
+        }
       }
-    } catch (error) {
-      Logger.warn('Failed to read VS Code ignore patterns:', error);
     }
   }
 

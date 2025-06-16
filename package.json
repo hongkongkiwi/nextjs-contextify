@@ -47,6 +47,26 @@
         "command": "nextjsContextifyExplorer.deselectAll",
         "title": "Deselect All",
         "icon": "$(close-all)"
+      },
+      {
+        "command": "nextjsContextify.generateContext",
+        "title": "📄 Generate Context",
+        "category": "Next.js Contextify"
+      },
+      {
+        "command": "nextjsContextify.generateUniversalContext",
+        "title": "🤖 Generate Universal AI Context",
+        "category": "Next.js Contextify"
+      },
+      {
+        "command": "nextjsContextify.createIgnoreFile",
+        "title": "🚫 Create AI Ignore File",
+        "category": "Next.js Contextify"
+      },
+      {
+        "command": "nextjsContextify.refresh",
+        "title": "🔄 Refresh",
+        "category": "Next.js Contextify"
       }
     ],
     "views": {

@@ -1,0 +1,207 @@
+# Universal AI Assistant Ignore File
+# Compatible with: Claude Code, Cursor, Roo, Windsurf, Cline, VSCodium
+# This file can be copied as: .aiignore, .cursorignore, .codiumignore, .clineignore, .rooignore, .windsurfignore, .claudeignore
+
+# ====================
+# BUILD & DIST FILES
+# ====================
+**/node_modules/
+**/dist/
+**/build/
+**/.next/
+**/out/
+**/.nuxt/
+**/.vite/
+**/.turbo/
+**/public/build/
+
+# ====================
+# PACKAGE MANAGERS
+# ====================
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+bun.lockb
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# ====================
+# ENVIRONMENT & CONFIG
+# ====================
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.production
+**/.env.development
+**/.env.test
+**/.vercelignore
+
+# ====================
+# IDE & EDITOR FILES
+# ====================
+**/.vscode/
+**/.idea/
+**/.fleet/
+**/cursor.code-workspace
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+
+# ====================
+# VERSION CONTROL
+# ====================
+**/.git/
+**/.gitignore
+**/.hg/
+**/.svn/
+
+# ====================
+# CACHE & TEMPORARY
+# ====================
+**/.cache/
+**/tmp/
+**/temp/
+**/.temp/
+**/.tmp/
+**/coverage/
+**/.nyc_output/
+**/.parcel-cache/
+**/.eslintcache
+**/.tsbuildinfo
+**/.swc/
+
+# ====================
+# TESTING
+# ====================
+**/cypress/videos/
+**/cypress/screenshots/
+**/playwright-report/
+**/test-results/
+**/__snapshots__/
+**/storybook-static/
+
+# ====================
+# DATABASE & STORAGE
+# ====================
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/prisma/migrations/*.sql
+**/prisma/seed.js
+
+# ====================
+# LARGE BINARY FILES
+# ====================
+**/*.zip
+**/*.tar.gz
+**/*.rar
+**/*.7z
+**/*.dmg
+**/*.iso
+**/*.img
+**/*.exe
+**/*.app
+**/*.deb
+**/*.rpm
+
+# ====================
+# MEDIA FILES (Optional - uncomment if needed)
+# ====================
+# **/*.mp4
+# **/*.avi
+# **/*.mov
+# **/*.wmv
+# **/*.flv
+# **/*.mp3
+# **/*.wav
+# **/*.flac
+# **/*.aac
+# **/*.psd
+# **/*.ai
+# **/*.sketch
+# **/*.fig
+
+# ====================
+# DOCUMENTATION (Optional - uncomment to exclude)
+# ====================
+# **/README.md
+# **/CHANGELOG.md
+# **/CONTRIBUTING.md
+# **/LICENSE
+# **/docs/
+# **/*.md
+
+# ====================
+# LOGS & MONITORING
+# ====================
+**/*.log
+**/logs/
+**/monitoring/
+**/sentry.properties
+
+# ====================
+# AI ASSISTANT OUTPUTS
+# ====================
+nextjs-context-*.md
+context-*.txt
+codebase-*.md
+project-analysis-*.md
+ai-context-*.json
+
+# ====================
+# CLOUD & DEPLOYMENT
+# ====================
+**/.serverless/
+**/.amplify/
+**/terraform.tfstate*
+**/.terraform/
+**/pulumi/
+
+# ====================
+# LANGUAGE SPECIFIC
+# ====================
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/venv/
+**/env/
+
+# Go
+**/vendor/
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+
+# Java
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+**/target/
+
+# Rust
+**/target/
+**/*.pdb
+
+# C/C++
+**/*.o
+**/*.obj
+**/*.a
+**/*.lib
+**/*.so
+**/*.dll
+**/*.dylib
+
+# ====================
+# CUSTOM PATTERNS
+# ====================
+# Add your project-specific patterns below: 
