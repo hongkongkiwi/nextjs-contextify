@@ -70,15 +70,15 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         
       - name: Publish to Open VSX Registry
-        if: (github.event.inputs.marketplace == 'openvsx' || github.event.inputs.marketplace == 'both') && env.OPEN_VSX_TOKEN != ''
+        if: (github.event.inputs.marketplace == 'openvsx' || github.event.inputs.marketplace == 'both') && env.OVSX_PAT != ''
         run: ovsx publish nextjs-contextify-*.vsix
         env:
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
           
       - name: Create summary
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           echo "## 🚀 Publication Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -98,10 +98,10 @@ jobs:
           
           # Open VSX Registry
           if [ "${{ github.event.inputs.marketplace }}" == "openvsx" ] || [ "${{ github.event.inputs.marketplace }}" == "both" ]; then
-            if [ -n "$OPEN_VSX_TOKEN" ]; then
+            if [ -n "$OVSX_PAT" ]; then
               echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
               echo "   - [View Extension](https://open-vsx.org/extension/hongkongkiwi/nextjs-contextify)" >> $GITHUB_STEP_SUMMARY
             else
-              echo "❌ **Open VSX Registry**: Failed - OPEN_VSX_TOKEN secret not configured" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **Open VSX Registry**: Failed - OVSX_PAT secret not configured" >> $GITHUB_STEP_SUMMARY
             fi
           fi 
