@@ -48,6 +48,86 @@ Choose from 12 specialized templates for different use cases:
 - **Route Handlers** (`route.ts/js`) detection
 - **Middleware** support
 
+### 🔍 **Comprehensive Project Detection**
+
+#### **Authentication Libraries**
+- ✅ **NextAuth.js** - Complete T3 Stack integration
+- ✅ **Auth.js** - Modern authentication patterns
+- ✅ **Clerk** - Middleware and configuration detection
+- ✅ **Better Auth** - Alternative auth solution
+- ✅ **Stack Auth** - Modern stack authentication
+- ✅ **Lucia** - Lightweight auth library
+- ✅ **Auth0** - Enterprise authentication
+- ✅ **Supabase Auth** - Backend-as-a-Service authentication
+
+#### **UI Framework Support**
+- ✅ **shadcn/ui** - Modern component library
+- ✅ **Material-UI (MUI)** - Google's Material Design
+- ✅ **Tailwind CSS** - Utility-first CSS framework
+- ✅ **Chakra UI** - Modular and accessible components
+- ✅ **Ant Design** - Enterprise-class UI design language
+- ✅ **NextUI** - Beautiful, fast, and modern components
+- ✅ **Radix UI** - Low-level UI primitives
+- ✅ **Headless UI** - Unstyled, accessible components
+- ✅ **Mantine** - Full-featured components library
+- ✅ **20+ additional UI libraries**
+
+#### **State Management Libraries**
+- ✅ **Zustand** - Small, fast state management
+- ✅ **Redux Toolkit** - Modern Redux patterns
+- ✅ **Jotai** - Primitive and flexible state management
+- ✅ **Valtio** - Proxy-based state management
+- ✅ **Recoil** - Experimental state management
+- ✅ **MobX** - Reactive state management
+
+#### **Database & ORM Support**
+- ✅ **Prisma** - Next-generation ORM
+- ✅ **ZenStack** - Enhanced schemas with access control
+- ✅ **Drizzle ORM** - TypeScript ORM
+- ✅ **Supabase** - Backend-as-a-Service
+
+#### **Testing Framework Support**
+- ✅ **Jest** - Popular testing framework
+- ✅ **Vitest** - Fast unit testing
+- ✅ **Playwright** - End-to-end testing
+- ✅ **Cypress** - Integration testing
+- ✅ **Testing Library** - React testing utilities
+- ✅ **Storybook** - Component development environment
+
+### 🎯 **Enhanced AI Assistant Support**
+
+#### **Target LLMs with Context Window Optimization**
+- ✅ **Claude 3.5/4 Sonnet** - 200K-1M tokens
+- ✅ **GPT-4 Turbo/4.1** - 128K-1M tokens
+- ✅ **Gemini 1.5/2.5 Pro** - 32K-2M tokens
+- ✅ **DeepSeek V3** - 64K tokens
+- ✅ **Grok 2/3** - 128K-1M tokens
+
+#### **AI Assistant-Specific Optimizations**
+- **Claude**: Hierarchical structure with executive summaries
+- **Cursor**: Anchor links and @codebase integration
+- **Windsurf**: Technology stack tables with versions
+- **Roo**: Configuration-focused with CLI commands
+- **Cline**: Task-oriented with tabular data
+
+### 💰 **Token Optimization & Cost Control**
+
+#### **Optimization Levels**
+- **Maximum Savings** (70-80% reduction): Focus on essential files only
+- **Balanced** (40-60% reduction): Good savings while maintaining completeness
+- **Custom Selection**: Fine-tune based on your specific needs
+
+#### **Content Optimization**
+- **Summarization**: Extract key code elements (70% token reduction)
+- **Comment Removal**: Strip unnecessary comments (10-20% reduction)
+- **Empty Line Removal**: Reduce visual bloat (5-10% reduction)
+- **Technology Exclusions**: Skip heavy dependencies like Prisma when not needed
+
+#### **Smart Filtering**
+- **Priority-based filtering**: Include only high-priority files (7-10 rating)
+- **File size limits**: Skip large files automatically
+- **Technology-aware exclusions**: Remove database schemas for frontend work
+
 ### 🎯 **Smart File Prioritization**
 Files are intelligently categorized and prioritized for optimal LLM processing:
 
@@ -115,6 +195,25 @@ Comprehensive default ignore patterns for modern Next.js development:
 - **File statistics** and metadata
 - **Progress indicators** during generation
 - **Structured output** with categories and priorities
+
+### 🛡️ **Project Validation & Graceful Handling**
+
+#### **Supported Project Types**
+- ✅ **Next.js Projects** - Full feature support
+- ⚠️ **Node.js Projects** - Educational guidance with helpful suggestions
+- ❌ **Non-Node.js Projects** - Clear guidance on getting started
+
+#### **Smart Detection**
+- Automatic Next.js version detection (14.x, 15.x+)
+- Router type detection (App Router vs Pages Router)
+- Project structure validation
+- Dependency analysis and recommendations
+
+#### **User-Friendly Messages**
+- Clear explanations when features aren't available
+- Specific suggestions based on project type
+- Links to relevant documentation
+- No crashes or undefined behavior
 
 ## 🔧 Installation
 
@@ -358,6 +457,21 @@ pnpm run ci
 pnpm run ci:fast
 ```
 
+### Version Management
+```bash
+# Patch release (2.1.1 → 2.1.2)
+pnpm run release
+
+# Minor release (2.1.1 → 2.2.0)
+pnpm run version:minor
+
+# Major release (2.1.1 → 3.0.0)
+pnpm run version:major
+
+# Check version info
+pnpm run version:info
+```
+
 ### Testing Extension
 1. Run `pnpm run package:install`
 2. Press `F5` in VS Code to launch Extension Development Host
@@ -368,6 +482,47 @@ pnpm run ci:fast
 - Use VS Code's built-in debugger with the included `launch.json`
 - Console logs appear in VS Code's Developer Tools
 - Extension logs appear in Output panel → "Extension Host"
+
+## 🧪 Testing
+
+### Test Scripts
+```bash
+# Run all tests (unit + integration)
+pnpm run test
+
+# Run only unit tests
+pnpm run test:unit
+
+# Run only integration tests
+pnpm run test:integration
+
+# Watch mode for unit tests
+pnpm run test:watch
+
+# Generate test coverage report
+pnpm run test:coverage
+
+# Run tests for CI
+pnpm run test:ci
+```
+
+### Test Structure
+- **Unit Tests**: Fast, isolated tests using Mocha
+- **Integration Tests**: Full VS Code extension tests using @vscode/test-electron
+- **Coverage**: Code coverage reports using c8
+- **CI/CD**: Automated testing in GitHub Actions
+
+### Testing Workflows Locally
+```bash
+# Test all CI commands locally (recommended before pushing)
+pnpm run validate:workflows
+
+# Test only CI commands (faster)
+pnpm run test:ci-commands
+
+# Test headless mode (simulates CI environment)
+pnpm run test:headless
+```
 
 ## 📁 Project Structure
 
