@@ -87,13 +87,7 @@ jobs:
       run: pnpm run test:coverage
       if: matrix.node-version == '22.x'
       
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v5.4.3
-      if: matrix.node-version == '22.x'
-      with:
-        files: ./coverage/lcov.info
-        token: ${{ secrets.CODECOV_TOKEN }}
-        
+
     - name: Security audit
       run: pnpm run security:check
       
